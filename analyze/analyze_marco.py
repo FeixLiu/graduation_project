@@ -3,14 +3,21 @@ import json
 path = '../../data/marco/train_v2.1.json'
 with open(path, 'r') as file:
     data = json.load(file)
+max_len = 0
+min_len = 999
 for i in range(len(data['answers'])):
     i = str(i)
+    if len(data['passages'][i]) > max_len:
+        max_len = len(data['passages'][i])
+    if len(data['passages'][i])  < min_len:
+        min_len = len(data['passages'][i])
+print(max_len, min_len)
+"""
     print(data['answers'][i])
     print(data['query'][i])
     for j in range(len(data['passages'][i])):
         print(data['passages'][i][j]['passage_text'].encode('utf-8'))
     break
-"""
 total = len(data['answers'])
 zero = 0
 one = 0
