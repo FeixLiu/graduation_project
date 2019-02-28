@@ -6,7 +6,7 @@ import json
 class Marco_dataset():
     def __init__(self, path):
         self._path = path
-        #self._bert = Bert_server()
+        self._bert = Bert_server()
         self.load_data()
 
     def load_data(self):
@@ -32,7 +32,13 @@ class Marco_dataset():
                 self.query.append(query)
                 self.answer.append('Cannot answer the question from the passage.')
                 self.label.append([1., 0.])
-        print(len(self.paragraph), len(self.query), len(self.answer), len(self.label))
+        self.paragraph_embd = self._bert.convert2vector(self.paragraph)
+        self.query_embd = self._bert.convert2vector(self.query)
+        self.answer_embd = self._bert.convert2vector(self.answer)
+        print(self.paragraph_embd.shape)
+        print(self.query_embd.shape)
+        print(self.answer_embd.shape)
+
 
     def figure_np(self, passage):
         positive = []
