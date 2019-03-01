@@ -1,7 +1,6 @@
 from hyperparameters import Hyperparameters as hp
 from bert import Bert_server
-from tqdm import tqdm
-import nltk
+import numpy as np
 import json
 
 
@@ -21,16 +20,10 @@ class Marco_dataset():
         self.paragraph_embd = []
         with open(self._path, 'r') as file:
             data = json.load(file)
-        for i in tqdm(range(len(data['answers']))):
+        for i in range(len(data['answers'])):
             i = str(i)
             query = data['query'][i]
-            query_token = nltk.word_tokenize(query)
-            print(query_token)
-            query_embd = self._bert.convert2vector(query_token, tokenized=True, show=True)
-            print(query_embd)
-            """
             answer = data['answers'][i][0]
-            answer_token = nltk.word_tokenize(answer)
             passage = data['passages'][i]
             positive, negative = self.figure_np(passage)
             for i in positive:
@@ -44,7 +37,7 @@ class Marco_dataset():
                 self.query.append(query)
                 self.answer.append(answer)
                 self.label.append([1., 0.])
-            """
+        self.label = np.array(self.label)
 
     def figure_np(self, passage):
         positive = []

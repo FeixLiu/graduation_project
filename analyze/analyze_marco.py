@@ -1,4 +1,5 @@
 import json
+import nltk
 
 path = '../../data/marco/train_v2.1.json'
 with open(path, 'r') as file:
@@ -16,16 +17,19 @@ total_qas = 0
 total_ans = 0
 for i in range(total):
     i = str(i)
-    query = data['query'][i].split(' ')
-    answer = data['answers'][i][0].split(' ')
+    query = nltk.word_tokenize(data['query'][i])
+    answer = nltk.word_tokenize(data['answers'][i][0])
     total_ans += len(answer)
     total_qas += len(query)
     for j in range(len(data['passages'][i])):
-        text = data['passages'][i][j]['passage_text'].split(' ')
+        text = nltk.word_tokenize(data['passages'][i][j]['passage_text'])
         total_text += len(text)
         text_num += 1
 
 print(text_num)
+print(total_text / text_num)
+print(total_ans / total)
+print(total_qas / total)
 
 """
 print(total_text / text_num)    56.81811206271719
