@@ -1,5 +1,7 @@
 from hyperparameters import Hyperparameters as hp
 from bert import Bert_server
+from tqdm import tqdm
+import nltk
 import json
 
 
@@ -14,12 +16,21 @@ class Marco_dataset():
         self.query = []
         self.answer = []
         self.label = []
+        self.query_embd = []
+        self.answer_embd = []
+        self.paragraph_embd = []
         with open(self._path, 'r') as file:
             data = json.load(file)
-        for i in range(len(data['answers'])):
+        for i in tqdm(range(len(data['answers']))):
             i = str(i)
             query = data['query'][i]
+            query_token = nltk.word_tokenize(query)
+            print(query_token)
+            query_embd = self._bert.convert2vector(query_token, tokenized=True, show=True)
+            print(query_embd)
+            """
             answer = data['answers'][i][0]
+            answer_token = nltk.word_tokenize(answer)
             passage = data['passages'][i]
             positive, negative = self.figure_np(passage)
             for i in positive:
@@ -27,18 +38,13 @@ class Marco_dataset():
                 self.query.append(query)
                 self.answer.append(answer)
                 self.label.append([0., 1.])
+            answer = 'Cannot answer the question from the passage.'
             for i in negative:
                 self.paragraph.append(i)
                 self.query.append(query)
-                self.answer.append('Cannot answer the question from the passage.')
+                self.answer.append(answer)
                 self.label.append([1., 0.])
-        self.paragraph_embd = self._bert.convert2vector(self.paragraph)
-        self.query_embd = self._bert.convert2vector(self.query)
-        self.answer_embd = self._bert.convert2vector(self.answer)
-        print(self.paragraph_embd.shape)
-        print(self.query_embd.shape)
-        print(self.answer_embd.shape)
-
+            """
 
     def figure_np(self, passage):
         positive = []

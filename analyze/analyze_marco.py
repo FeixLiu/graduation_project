@@ -26,11 +26,11 @@ for i in range(total):
         text_num += 1
 
 print(text_num)
-print(total_text / text_num)
-print(total_ans / total)
-print(total_qas / total)
 
 """
+print(total_text / text_num)    56.81811206271719
+print(total_ans / total)        9.155245687379363
+print(total_qas / total)        6.371066522737474
     
     if len(query) > max_qas:
         max_qas = len(query)
