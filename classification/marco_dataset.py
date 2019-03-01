@@ -1,13 +1,12 @@
 from hyperparameters import Hyperparameters as hp
-from bert import Bert_server
-import numpy as np
+from sklearn.utils import shuffle
 import json
+import sys
 
 
 class Marco_dataset():
     def __init__(self, path):
         self._path = path
-        self._bert = Bert_server()
         self.load_data()
 
     def load_data(self):
@@ -15,9 +14,6 @@ class Marco_dataset():
         self.query = []
         self.answer = []
         self.label = []
-        self.query_embd = []
-        self.answer_embd = []
-        self.paragraph_embd = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         for i in range(len(data['answers'])):
@@ -25,7 +21,7 @@ class Marco_dataset():
             query = data['query'][i]
             answer = data['answers'][i][0]
             passage = data['passages'][i]
-            positive, negative = self.figure_np(passage)
+            positive, negative = self.figure_pn(passage)
             for i in positive:
                 self.paragraph.append(i)
                 self.query.append(query)
@@ -37,9 +33,10 @@ class Marco_dataset():
                 self.query.append(query)
                 self.answer.append(answer)
                 self.label.append([1., 0.])
-        self.label = np.array(self.label)
+        self.paragraph, self.query, self.answer, self.label = shuffle(self.paragraph, self.query, self.answer, self.label)
+        print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set.', file=sys.stderr)
 
-    def figure_np(self, passage):
+    def figure_pn(self, passage):
         positive = []
         negative = []
         for i in range(len(passage)):

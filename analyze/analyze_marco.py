@@ -1,10 +1,11 @@
 import json
-import nltk
+import numpy as np
 
 path = '../../data/marco/train_v2.1.json'
 with open(path, 'r') as file:
     data = json.load(file)
 total = len(data['answers'])
+"""
 max_text = 0
 min_text = 9999
 max_qas = 0
@@ -15,21 +16,31 @@ total_text = 0
 text_num = 0
 total_qas = 0
 total_ans = 0
+"""
+ratio = np.array([0, 0])
 for i in range(total):
     i = str(i)
-    query = nltk.word_tokenize(data['query'][i])
-    answer = nltk.word_tokenize(data['answers'][i][0])
-    total_ans += len(answer)
-    total_qas += len(query)
+    #query = nltk.word_tokenize(data['query'][i])
+    #answer = nltk.word_tokenize(data['answers'][i][0])
+    #total_ans += len(answer)
+    #total_qas += len(query)
     for j in range(len(data['passages'][i])):
-        text = nltk.word_tokenize(data['passages'][i][j]['passage_text'])
-        total_text += len(text)
-        text_num += 1
+        if data['passages'][i][j]['is_selected'] == 1:
+            ratio += np.array([0, 1])
+        else:
+            ratio += np.array([1, 0])
+        #text = nltk.word_tokenize(data['passages'][i][j]['passage_text'])
+        #total_text += len(text)
+        #text_num += 1
 
+print(ratio)
+
+"""
 print(text_num)
 print(total_text / text_num)
 print(total_ans / total)
 print(total_qas / total)
+"""
 
 """
 print(total_text / text_num)    56.81811206271719
