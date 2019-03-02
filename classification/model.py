@@ -6,9 +6,11 @@ from BiDAF import BiDAF
 #from bert import Bert_server as bs
 from LinearReLU import *
 from BiLSTM import BiLSTM
+from utils import *
 
 '''
-bert = bs()
+with tf..variable_scope('bert_service', reuse=tf.AUTO_REUSE):
+    bert = bs()
 marco_train = md(path=hp.marco_train_path)
 marco_eval = md(path=hp.marco_eval_path)
 marco_dev = md(path=hp.marco_dev_path)
@@ -76,5 +78,5 @@ with tf.variable_scope('prediction', reuse=tf.AUTO_REUSE):
 
 with tf.variable_scope('lossAndTrainOfClassification'):
     #class balanced cross-entropy
-    loss = 0
+    loss = class_balanced_cross_entropy(labels=target, logtis=prediction, beta=hp.class_balance).loss
     train_op = tf.train.AdamOptimizer().minimize(loss)
