@@ -6,14 +6,16 @@ from bert import Bert_server as bs
 from LinearReLU import *
 from BiLSTM import BiLSTM
 from utils import *
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 with tf.device('/gpu:1'):
     with tf.variable_scope('bert_service', reuse=tf.AUTO_REUSE):
         bert = bs()
-    marco_train = md(path=hp.marco_train_path)
-    marco_eval = md(path=hp.marco_eval_path)
-    marco_dev = md(path=hp.marco_dev_path)
 
+
+    marco_train = md(path=hp.marco_train_path)
+    marco_dev = md(path=hp.marco_dev_path)
 
     para_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
     qas_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
@@ -74,7 +76,6 @@ with tf.device('/gpu:1'):
             keepProb=keep_prob
         ).relu
 
-
     with tf.variable_scope('lossAndTrainOfClassification'):
         #class balanced cross-entropy
         loss = class_balanced_cross_entropy(labels=target, logtis=prediction, beta=hp.class_balance).loss
@@ -82,5 +83,5 @@ with tf.device('/gpu:1'):
 
     init = tf.global_variables_initializer()
 
-    with tf.Session() as sess:
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True,log_device_placement=True)) as sess:
         sess.run(init)

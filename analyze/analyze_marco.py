@@ -1,11 +1,23 @@
 import json
 import numpy as np
 
-path = '../../data/marco/train_v2.1.json'
+path = '../../data/marco/eval_v2.1_public.json'
 with open(path, 'r') as file:
     data = json.load(file)
-total = len(data['answers'])
+print(data.keys())
+
+
+
+
+
+
+
+
+
+
+
 """
+total = len(data['answers'])
 max_text = 0
 min_text = 9999
 max_qas = 0
@@ -17,6 +29,7 @@ text_num = 0
 total_qas = 0
 total_ans = 0
 """
+'''
 ratio = np.array([0, 0])
 for i in range(total):
     i = str(i)
@@ -34,7 +47,7 @@ for i in range(total):
         #text_num += 1
 
 print(ratio)
-
+'''
 """
 print(text_num)
 print(total_text / text_num)

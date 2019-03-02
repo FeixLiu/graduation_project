@@ -45,7 +45,3 @@ class Marco_dataset():
             else:
                 negative.append(passage[i]['passage_text'])
         return positive, negative
-
-marco_train = Marco_dataset(path=hp.marco_train_path)
-#marco_eval = Marco_dataset(path=hp.marco_eval_path)
-#marco_dev = Marco_dataset(path=hp.marco_dev_path)
