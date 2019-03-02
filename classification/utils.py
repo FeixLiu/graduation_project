@@ -19,4 +19,5 @@ class class_balanced_cross_entropy():
         log_prediction = tf.math.log(prediction_softmax)
         class_balance = tf.Variable(tf.constant([self._beta, -1], dtype=tf.float32))
         loss = tf.reduce_sum(tf.multiply(tf.multiply(log_prediction, self._labels), class_balance), axis=1)
+        loss = tf.reduce_mean(loss)
         return loss

@@ -16,7 +16,8 @@ class Marco_dataset():
         self.label = []
         with open(self._path, 'r') as file:
             data = json.load(file)
-        for i in range(len(data['answers'])):
+        self.total = len(data['answers'])
+        for i in range(self.total):
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]

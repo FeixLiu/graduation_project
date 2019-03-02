@@ -30,7 +30,7 @@ class LinearRelu3d():
         return relu
 
 
-class LinearRelu2d():
+class Lineartanh2d():
     """
     :param inputs: the input vector [batch size, input size]
     :param inputs_size: the 2rd dimension of the inputs
@@ -44,13 +44,13 @@ class LinearRelu2d():
         self._inputs_size = inputs_size
         self._outputs_size = outputs_size
         self._keepProb = keepProb
-        self.relu = self.LR()
+        self.relu = self.LT()
 
-    def LR(self):
+    def LT(self):
         weights = tf.Variable(tf.random_normal(shape=[self._inputs_size, self._outputs_size]))
         biases = tf.Variable(tf.constant(0.1, shape=[self._outputs_size]))
         wx_plus_b = tf.add(tf.matmul(self._inputs, weights), biases)
-        relu = tf.nn.relu(wx_plus_b)
+        relu = tf.nn.tanh(wx_plus_b)
         if self._keepProb is not None:
             relu = tf.nn.dropout(relu, self._keepProb)
         return relu
