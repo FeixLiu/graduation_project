@@ -1,7 +1,4 @@
-from hyperparameters import Hyperparameters as hp
-from bert import Bert_server as bs
 import tensorflow as tf
-import numpy as np
 
 
 class BiDAF():
