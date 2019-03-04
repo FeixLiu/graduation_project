@@ -3,6 +3,7 @@ from sklearn.utils import shuffle
 import json
 import sys
 from conceptNet import ConcetNet
+from tqdm import tqdm
 
 
 class Marco_dataset():
@@ -19,14 +20,18 @@ class Marco_dataset():
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
-        for i in range(self.total):
+        total = 0
+        add = 0
+        for i in tqdm(range(self.total)):
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
             passage = data['passages'][i]
             positive, negative = self._figure_pn(passage)
             for i in positive:
-                self._get_extension(i, query)
+                total += 1
+                if self._get_extension(i, query) != query:
+                    add += 1
                 self.paragraph.append(i)
                 self.query.append(query)
                 self.answer.append(answer)
@@ -40,6 +45,7 @@ class Marco_dataset():
                 self.label.append([1., 0.])
         self.paragraph, self.query, self.answer, self.label = shuffle(self.paragraph, self.query, self.answer, self.label)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set.', file=sys.stderr)
+        print(add / total)
 
     def _figure_pn(self, passage):
         positive = []
@@ -53,10 +59,6 @@ class Marco_dataset():
 
     def _get_extension(self, paragraph, qeustion):
         question_extension = self._net.a_and_b_relation(paragraph, qeustion)
-        if question_extension != qeustion:
-            print(paragraph.encode('utf-8'))
-            print(question_extension.encode('utf-8'))
-        print('\n\n\n\n\n')
-        return ''
+        return question_extension
 
 Marco_dataset(hp.marco_train_path)

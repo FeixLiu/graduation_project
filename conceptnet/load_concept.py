@@ -35,7 +35,7 @@ class Load_concept():
                 obj = json.loads(fs[-1])
                 if obj['weight'] < 1:
                     continue
-                if w1 in self._stop_words and w2 in self._stop_words:
+                if w1 in self._stop_words or w2 in self._stop_words:
                     continue
                 writer.write('%s %s %s\n' % (relation, w1, w2))
         writer.close()

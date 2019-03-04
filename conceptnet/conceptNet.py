@@ -32,6 +32,8 @@ class ConcetNet():
         for i in range(len(refa_word)):
             for word in refb_word:
                 ref = refa_word[i]
+                if ref in refb_word:
+                    continue
                 relation = self._get_relation(ref, word)
                 if relation != '<NULL>' and ref != word:
                     adding = '(' + ref + ' ' + relation + ' ' + word + ')'
