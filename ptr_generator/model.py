@@ -4,6 +4,7 @@ from hyperparameters import Hyperparameters as hp
 from bert import Bert_server
 import tensorflow as tf
 import os
+from load_glove import Load_glove
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 with tf.device('/gpu:1'):
@@ -12,6 +13,7 @@ with tf.device('/gpu:1'):
         bert = Bert_server()
     marco_train = Marco_dataset(path=hp.marco_train_path)
     marco_dev = Marco_dataset(path=hp.marco_dev_path)
+    vocab = Load_glove(hp.glove_path)
     '''
     para_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
     qas_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
