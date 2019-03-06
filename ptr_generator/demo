@@ -1,0 +1,69 @@
+import tensorflow as tf
+from marco_dataset import Marco_dataset
+from load_glove import Load_glove
+from hyperparameters import Hyperparameters as hp
+from bert import Bert_server
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+'''
+vocab = Load_glove(hp.glove_path)
+marco_train = Marco_dataset(hp.marco_dev_path, vocab)
+bert_server = Bert_server()
+'''
+
+H = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
+s = tf.placeholder(dtype=tf.float32, shape=[None, 1, hp.bert_embedding_size])
+
+wh = tf.Variable(tf.random_normal(shape=[hp.bert_embedding_size, hp.attention_inter_size]))
+ws = tf.Variable(tf.random_normal(shape=[hp.bert_embedding_size, hp.attention_inter_size]))
+battn = tf.Variable(tf.constant(0.1, shape=[hp.attention_inter_size]))
+v = tf.Variable(tf.random_normal(shape=[hp.attention_inter_size, 1]))
+
+Hr = tf.reshape(H, [-1, hp.bert_embedding_size])
+sr = tf.reshape(s, [-1, hp.bert_embedding_size])
+whh = tf.matmul(Hr, wh)
+wss = tf.matmul(sr, ws)
+whh = tf.reshape(whh, [-1, hp.max_seq_length, hp.attention_inter_size])
+wss = tf.reshape(wss, [-1, hp.max_seq_length, hp.attention_inter_size])
+wss = tf.tile(wss, [1, 64, 1])
+whhwss = tf.add(whh, wss)
+whhwss = tf.reshape(whhwss, [-1, hp.attention_inter_size])
+et = tf.matmul(tf.add(whhwss, battn), v)
+et = tf.reshape(et, [-1, hp.max_seq_length, 1])
+at = tf.nn.softmax(et, axis=1)
+at_tile = tf.tile(at, [1, 1, hp.bert_embedding_size])
+
+hstart = tf.expand_dims(tf.reduce_sum(tf.math.multiply(H, at_tile), axis=1), axis=1)
+prediction_pre = tf.concat([s, hstart], axis=2)
+
+prediction_w1 = tf.Variable(tf.random_normal(
+    shape=[2 * hp.bert_embedding_size, hp.prediction_inter_size]),
+    dtype=tf.float32
+)
+prediction_b1 = tf.Variable(tf.constant(0.1, shape=[hp.prediction_inter_size]), dtype=tf.float32)
+prediction_w2 = tf.Variable(tf.random_normal(
+    shape=[hp.prediction_inter_size, hp.vocab_size]),
+    dtype=tf.float32
+)
+prediction_b2 = tf.Variable(tf.constant(0.1, shape=[hp.vocab_size]))
+prediction_pre = tf.reshape(prediction_pre, shape=[-1, 2 * hp.bert_embedding_size])
+prediction = tf.add(tf.matmul(tf.add(tf.matmul(prediction_pre,
+                                               prediction_w1),
+                                     prediction_b1),
+                              prediction_w2),
+                    prediction_b2)
+prediction = tf.reshape(prediction, shape=[-1, 1, hp.vocab_size])
+pvocab = tf.nn.softmax(prediction, axis=2)
+word_index = tf.argmax(pvocab, axis=2)
+print(word_index)
+
+'''
+while True:
+    start_index = 0
+    passage = marco_train.paragraph[start_index:start_index + hp.batch_size]
+    answer = marco_train.answer[start_index:start_index + hp.batch_size]
+    answer_index = marco_train.answer[start_index:start_index + hp.batch_size]
+    start_index += hp.batch_size
+    start_index %= marco_train.total
+    '''

@@ -32,9 +32,10 @@ with tf.device('/gpu:1'):
             hidden_units=hp.bert_embedding_size
         ).fuse_vector
 
-    converge_vector = tf.Variable(tf.zeros(dtype=tf.float32, shape=[None, hp.max_seq_length]))
+    converge_vector = tf.Variable(tf.zeros(shape=[hp.batch_size, hp.max_seq_length]))
     word = ['' for _ in range(hp.batch_size)]
     loss = tf.Variable(trainable=False, initial_value=tf.constant(0., dtype=tf.float32), dtype=tf.float32)
+    print(loss)
     index = 0
     while index < hp.max_seq_length:
         index += 1

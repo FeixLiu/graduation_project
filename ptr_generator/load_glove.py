@@ -6,6 +6,7 @@ class Load_glove():
     def __init__(self, path):
         self._path = path
         self._load_glove()
+        self.vocab_size = len(self.vocab2index)
 
     def _load_glove(self):
         index = 2
@@ -23,4 +24,3 @@ class Load_glove():
                 index += 1
                 self.vocab2index[row[0]] = index
                 self.index2vocab[index] = row[0]
-        print('Loaded vocabulary dictionary.', file=sys.stderr)

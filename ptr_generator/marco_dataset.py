@@ -4,18 +4,21 @@ import json
 import sys
 import nltk
 from tqdm import tqdm
+from load_glove import Load_glove
 
 
 class Marco_dataset():
-    def __init__(self, path):
+    def __init__(self, path, vocab):
         self._path = path
-        self.load_data()
+        self._vocab = vocab
+        self._load_data()
 
-    def load_data(self):
+    def _load_data(self):
         self.paragraph = []
         self.query = []
         self.answer = []
         self.label = []
+        self.answer_index = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
@@ -31,17 +34,21 @@ class Marco_dataset():
                 answer += j
                 answer += ' '
             answer = answer.strip()
+            answer_index = self._convert2index(answer_token)
+            print(answer_token, answer)
             passage = data['passages'][i]
-            positive, negative = self.figure_pn(passage)
+            positive, negative = self._figure_pn(passage)
             for i in positive:
                 self.paragraph.append(i)
                 self.query.append(query)
                 self.answer.append(answer)
+                self.answer_index.append(answer_index)
                 self.label.append([0., 1.])
             answer = 'No Answer Present.'
             answer_token = nltk.word_tokenize(answer)
             answer_token.insert(0, '<Start>')
             answer_token.append('<End>')
+            answer_index = self._convert2index(answer_token)
             answer = ''
             for j in answer_token:
                 answer += j
@@ -51,11 +58,12 @@ class Marco_dataset():
                 self.paragraph.append(i)
                 self.query.append(query)
                 self.answer.append(answer)
+                self.answer_index.append(answer_index)
                 self.label.append([1., 0.])
         self.paragraph, self.query, self.answer, self.label = shuffle(self.paragraph, self.query, self.answer, self.label)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set.', file=sys.stderr)
 
-    def figure_pn(self, passage):
+    def _figure_pn(self, passage):
         positive = []
         negative = []
         for i in range(len(passage)):
@@ -64,3 +72,13 @@ class Marco_dataset():
             else:
                 negative.append(passage[i]['passage_text'])
         return positive, negative
+
+    def _convert2index(self, answer):
+        rst = []
+        for i in answer:
+            try:
+                index = self._vocab.vocab2index[i]
+            except KeyError:
+                index = 0
+            rst.append(index)
+        return rst
