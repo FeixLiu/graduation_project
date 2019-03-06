@@ -5,7 +5,8 @@
 20190301:调试bert服务器。确认不实用nltk（太慢了）。加载marco的时候不用bert，在训练的时候用bert。考虑如何改进marco数据的存储方式。加入BiDAF代码。
 20190302:基本完成分类代码。实现class balanced cross-entropy。模型跑起来了。不知道最后的结果，loss下降不明显（可能数据过于稀疏）。
 20190303:开始着手开发ptr-generator模型。然后几天放假……肝不动了。
-
+20190304:分析Marco数据集的common sense部分，得出结论，Marco无需common sense。
+20190305:思考如何优化模型，没有太好的思路。思考如何开发ptr-generator。
 
 接下来任务：
 如何优化Marco的存储。

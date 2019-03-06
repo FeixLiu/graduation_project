@@ -2,6 +2,8 @@ from hyperparameters import Hyperparameters as hp
 from sklearn.utils import shuffle
 import json
 import sys
+import nltk
+from tqdm import tqdm
 
 
 class Marco_dataset():
@@ -17,10 +19,18 @@ class Marco_dataset():
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
-        for i in range(self.total):
+        for i in tqdm(range(self.total)):
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
+            answer_token = nltk.word_tokenize(answer)
+            answer_token.insert(0, '<Start>')
+            answer_token.append('<End>')
+            answer = ''
+            for j in answer_token:
+                answer += j
+                answer += ' '
+            answer = answer.strip()
             passage = data['passages'][i]
             positive, negative = self.figure_pn(passage)
             for i in positive:
@@ -28,7 +38,15 @@ class Marco_dataset():
                 self.query.append(query)
                 self.answer.append(answer)
                 self.label.append([0., 1.])
-            answer = 'Cannot answer the question from the passage.'
+            answer = 'No Answer Present.'
+            answer_token = nltk.word_tokenize(answer)
+            answer_token.insert(0, '<Start>')
+            answer_token.append('<End>')
+            answer = ''
+            for j in answer_token:
+                answer += j
+                answer += ' '
+            answer = answer.strip()
             for i in negative:
                 self.paragraph.append(i)
                 self.query.append(query)
