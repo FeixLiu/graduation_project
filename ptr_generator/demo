@@ -19,4 +19,24 @@ wh = tf.Variable(tf.random_normal(shape=[hp.bert_embedding_size, hp.attention_in
 ws = tf.Variable(tf.random_normal(shape=[hp.bert_embedding_size, hp.attention_inter_size]), dtype=tf.float32)
 batten = tf.Variable(tf.constant(0.1, shape=[hp.attention_inter_size]))
 v = tf.Variable(tf.random_normal(shape=[hp.attention_inter_size, 1]))
+hr = tf.tile(tf.expand_dims(H, 2), [1, 1, hp.max_seq_length, 1])
+# hr.shape = [batch_size, max_length, time_step, bert_embedding_size]
+sr = tf.tile(tf.expand_dims(s, 1), [1, hp.max_seq_length, 1, 1])
+# sr.shape = [batch_size, time_step, max_length, bert_embedding_size]
+hr = tf.reshape(hr, [-1, hp.bert_embedding_size])
+sr = tf.reshape(sr, [-1, hp.bert_embedding_size])
+E = tf.matmul(
+        tf.add(
+            tf.add(
+                tf.matmul(hr, wh),  # [batch_size x max_length x time_step, bert_embedding_size]
+                tf.matmul(sr, ws)   # [batch_size x time_step x max_length, bert_embedding_size]
+            ),
+            batten
+        ),
+    v) # [batch_size x max_length x time_step, 1]
+E = tf.reshape(E, shape=[-1, hp.max_seq_length, hp.max_seq_length, 1])  # [batch_size, max_length, time_step, 1]
+attention = tf.reduce_sum(tf.nn.softmax(E, axis=1), axis=3)  # [batch_size, max_length, time_step]
+
+# waiting for calculate the context vector
+
 
