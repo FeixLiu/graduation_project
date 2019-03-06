@@ -7,7 +7,7 @@
 20190303:开始着手开发ptr-generator模型。然后几天放假……肝不动了。
 20190304:分析Marco数据集的common sense部分，得出结论，Marco无需common sense。
 20190305:思考如何优化模型，没有太好的思路。思考如何开发ptr-generator。
-20190306:开发seq2seq with attentin模型。
+20190306:开发seq2seq with attentin模型，开发到context vector之前。
 
 接下来任务：
 0306开发的demo有问题，answer的输入是[batch_size x max_seq_length x bert_embedding_size]的
