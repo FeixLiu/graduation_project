@@ -11,7 +11,7 @@
 20190307:完成开发seq2seq with attention模型，我真是个天才。放弃大glove，词太多了，使用小glove。完善开题报告以及任务书。
 
 接下来任务：
-0307的模型中，loss为nan，需要解决。
+0307的模型中，loss为nan，需要解决。问题发现：prob的值为0，log之后nan。
 开发ptr-generator的模型。
 如何优化Marco的存储。
 如何优化模型，现在的模型太大了。如何精简？
