@@ -6,7 +6,6 @@ class Load_glove():
     def __init__(self, path):
         self._path = path
         self._load_glove()
-        self.vocab_size = len(self.vocab2index)
 
     def _load_glove(self):
         index = 2

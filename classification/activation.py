@@ -21,7 +21,7 @@ class LinearRelu3d():
     def LR(self):
         inputs = tf.reshape(self._inputs, [-1, self._inputs_size])
         weights = tf.Variable(tf.random_normal(shape=[self._inputs_size, self._outputs_size]))
-        biases = tf.Variable(tf.constant(0.1, shape=[self._outputs_size]))
+        biases = tf.Variable(tf.constant(0.1, shape=[1, self._outputs_size]))
         wx_plus_b = tf.add(tf.matmul(inputs, weights), biases)
         relu = tf.nn.relu(wx_plus_b)
         if self._keepProb is not None:
@@ -48,7 +48,7 @@ class Lineartanh2d():
 
     def LT(self):
         weights = tf.Variable(tf.random_normal(shape=[self._inputs_size, self._outputs_size]))
-        biases = tf.Variable(tf.constant(0.1, shape=[self._outputs_size]))
+        biases = tf.Variable(tf.constant(0.1, shape=[1, self._outputs_size]))
         wx_plus_b = tf.add(tf.matmul(self._inputs, weights), biases)
         relu = tf.nn.tanh(wx_plus_b)
         if self._keepProb is not None:

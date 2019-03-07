@@ -2,11 +2,11 @@ class Hyperparameters():
     marco_train_path = '../../data/marco/train_v2.1.json'
     marco_eval_path = '../../data/marco/eval_v2.1_public.json'
     marco_dev_path = '../../data/marco/dev_v2.1.json'
-    glove_path = '../../data/glove/glove.840B.300d.txt'
+    glove_path = '../../data/glove/glove.6B.50d.txt'
     max_seq_length = 64
     attention_inter_size = 256
-    prediction_inter_size = 1048576
-    vocab_size = 2196010
+    prediction_inter_size = 32768
+    vocab_size = 400002
     class_balance = -10
     batch_size = 4
     bert_embedding_size = 768

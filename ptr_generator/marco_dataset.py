@@ -22,7 +22,8 @@ class Marco_dataset():
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
-        for i in tqdm(range(self.total)):
+        index = 0
+        for i in range(self.total):
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
@@ -35,15 +36,16 @@ class Marco_dataset():
                 answer += ' '
             answer = answer.strip()
             answer_index = self._convert2index(answer_token)
-            print(answer_token, answer)
             passage = data['passages'][i]
             positive, negative = self._figure_pn(passage)
             for i in positive:
+                index += 1
                 self.paragraph.append(i)
                 self.query.append(query)
                 self.answer.append(answer)
                 self.answer_index.append(answer_index)
                 self.label.append([0., 1.])
+            '''
             answer = 'No Answer Present.'
             answer_token = nltk.word_tokenize(answer)
             answer_token.insert(0, '<Start>')
@@ -60,6 +62,8 @@ class Marco_dataset():
                 self.answer.append(answer)
                 self.answer_index.append(answer_index)
                 self.label.append([1., 0.])
+            '''
+        self.total = index
         self.paragraph, self.query, self.answer, self.label = shuffle(self.paragraph, self.query, self.answer, self.label)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set.', file=sys.stderr)
 

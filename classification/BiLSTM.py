@@ -25,7 +25,7 @@ class BiLSTM():
     def lstm(self):
         if self._project:
             weights = tf.Variable(tf.random_normal(shape=[self._input_size, self._hidden_units]))
-            biases = tf.Variable(tf.constant(0.1, shape=[self._hidden_units]))
+            biases = tf.Variable(tf.constant(0.1, shape=[1, self._hidden_units]))
             x = tf.reshape(self._inputs, [-1, self._input_size])
             x_in = tf.add(tf.matmul(x, weights), biases)
             x_in = tf.reshape(x_in, [-1, self._time_steps, self._hidden_units])
