@@ -84,7 +84,7 @@ with tf.device('/cpu'):
 
     #loss
     prob = tf.gather_nd(p_vocab, answer)
-    loss = tf.reduce_sum(tf.math.log(prob), axis=1) / hp.max_seq_length
+    loss = tf.reduce_sum(0 - tf.math.log(tf.clip_by_value(prob, 1e-8, 1.0)), axis=1) / hp.max_seq_length
     loss = tf.reduce_mean(loss, axis=0)
     train_op = tf.train.GradientDescentOptimizer(learning_rate=hp.learning_rate).minimize(loss)
 
@@ -108,4 +108,4 @@ with tf.device('/cpu'):
                     answer: answer_index
                 }
                 sess.run(train_op, feed_dict=feedDict)
-                print(sess.run(prob, feed_dict=feedDict))
+                print(sess.run(loss, feed_dict=feedDict))
