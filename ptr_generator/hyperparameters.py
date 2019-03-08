@@ -3,10 +3,11 @@ class Hyperparameters():
     marco_eval_path = '../../data/marco/eval_v2.1_public.json'
     marco_dev_path = '../../data/marco/dev_v2.1.json'
     glove_path = '../../data/glove/glove.6B.50d.txt'
+    word = '../../data/word/words'
     max_seq_length = 64
     attention_inter_size = 256
-    prediction_inter_size = 32768
-    vocab_size = 400002
+    prediction_inter_size = 10000
+    vocab_size = 20202
     class_balance = -10
     batch_size = 4
     bert_embedding_size = 768

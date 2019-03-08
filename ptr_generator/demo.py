@@ -24,11 +24,11 @@ def convert2indices(answer_index):
     return np.array(indices)
 
 
-vocab = Load_glove(hp.glove_path)
+vocab = Load_glove(hp.word)
 marco_train = Marco_dataset(hp.marco_dev_path, vocab)
 bert_server = Bert_server()
 
-with tf.device('/cpu'):
+with tf.device('/gpu:1'):
     # placeholder
     H = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
     s = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
@@ -46,12 +46,14 @@ with tf.device('/cpu'):
     hr = tf.reshape(hr, [-1, hp.bert_embedding_size])
     sr = tf.reshape(sr, [-1, hp.bert_embedding_size])
     E = tf.matmul(
-            tf.add(
+            tf.nn.tanh(
                 tf.add(
-                    tf.matmul(hr, wh),  # [batch_size x max_length x time_step, bert_embedding_size]
-                    tf.matmul(sr, ws)   # [batch_size x time_step x max_length, bert_embedding_size]
-                ),
+                    tf.add(
+                        tf.matmul(hr, wh),  # [batch_size x max_length x time_step, bert_embedding_size]
+                        tf.matmul(sr, ws)   # [batch_size x time_step x max_length, bert_embedding_size]
+                    ),
                 batten
+                )
             ),
         v) # [batch_size x max_length x time_step, 1]
     E = tf.reshape(E, shape=[-1, hp.max_seq_length, hp.max_seq_length, 1])  # [batch_size, max_length, time_step, 1]
@@ -66,20 +68,20 @@ with tf.device('/cpu'):
     prediction_pre = tf.concat([s, htstart], axis=2)
     prediction_pre = tf.reshape(prediction_pre, shape=[-1, 2 * hp.bert_embedding_size])
     prediction_w1 = tf.Variable(tf.random_normal(
-        shape=[2 * hp.bert_embedding_size, hp.vocab_size]),
+        shape=[2 * hp.bert_embedding_size, hp.prediction_inter_size]),
         dtype=tf.float32
     )
-    prediction_b1 = tf.Variable(tf.constant(0.1, shape=[1, hp.vocab_size]), dtype=tf.float32)
-    '''
+    prediction_b1 = tf.Variable(tf.constant(0.1, shape=[1, hp.prediction_inter_size]), dtype=tf.float32)
     prediction_w2 = tf.Variable(tf.random_normal(
         shape=[hp.prediction_inter_size, hp.vocab_size]),
         dtype=tf.float32
     )
     prediction_b2 = tf.Variable(tf.constant(0.1, shape=[1, hp.vocab_size]), dtype=tf.float32)
-    '''
     p_vocab = tf.add(tf.matmul(prediction_pre, prediction_w1), prediction_b1)
-    #p_vocab = tf.add(tf.matmul(p_vocab, prediction_w2), prediction_b2)
+    p_vocab = tf.nn.tanh(p_vocab)
+    p_vocab = tf.add(tf.matmul(p_vocab, prediction_w2), prediction_b2)
     p_vocab = tf.reshape(p_vocab, shape=[-1, hp.max_seq_length, hp.vocab_size])
+    p_vocab = tf.nn.tanh(p_vocab)
     p_vocab = tf.nn.softmax(p_vocab, axis=2)
 
     #loss

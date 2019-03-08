@@ -17,9 +17,10 @@ class Load_glove():
         self.index2vocab[1] = '<Start>'
         self.vocab2index['<End>'] = 2
         self.index2vocab[2] = '<End>'
-        with open(self._path, 'r', encoding='utf-8') as file:
+        with open(self._path, 'r', encoding='gb2312') as file:
             for line in file:
-                row = line.strip().split(' ')
+                row = line.strip()
                 index += 1
-                self.vocab2index[row[0]] = index
-                self.index2vocab[index] = row[0]
+                self.vocab2index[row] = index
+                self.index2vocab[index] = row
+
