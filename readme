@@ -12,6 +12,7 @@
 20190308:过三八妇女节。
 20190309:准备并完成哥伦比亚大学的面试。
 20190310:开发ptr generator network，等待计算p(w)
+20190313:完成ptr generator network。p(w)：将pvocab与at concat之后，来求。在读入Marco的时候对answer编码进行扩充。将OOV的index计算出来。
 
 接下来任务：
 开发ptr-generator的模型。
