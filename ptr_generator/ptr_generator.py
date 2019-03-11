@@ -31,7 +31,7 @@ class PTR_Gnerator():
             ),
             v
         )
-        et = tf.reshape(et, [-1, hp.max_seq_length, 1])
+        et = tf.reshape(et, [-1, hp.max_seq_length])
         at = tf.nn.softmax(et, axis=1)
         return at
 

@@ -9,6 +9,7 @@ class Hyperparameters():
     prediction_inter_size = 10000
     vocab_size = 20202
     class_balance = -10
+    alpha = 0.5
     batch_size = 4
     bert_embedding_size = 768
     keep_prob = 0.5

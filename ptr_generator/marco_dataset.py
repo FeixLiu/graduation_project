@@ -15,6 +15,7 @@ class Marco_dataset():
 
     def _load_data(self):
         self.paragraph = []
+        self._paragraph_word = []
         self.query = []
         self.answer = []
         self.label = []
@@ -35,12 +36,14 @@ class Marco_dataset():
                 answer += j
                 answer += ' '
             answer = answer.strip()
-            answer_index = self._convert2index(answer_token)
             passage = data['passages'][i]
             positive, negative = self._figure_pn(passage)
-            for i in positive:
+            for j in positive:
                 index += 1
-                self.paragraph.append(i)
+                self._paragraph_word = self._para_index(j)
+                answer_index = self._convert2index(answer_token)
+                print(answer_index)
+                self.paragraph.append(j)
                 self.query.append(query)
                 self.answer.append(answer)
                 self.answer_index.append(answer_index)
@@ -67,6 +70,21 @@ class Marco_dataset():
         self.paragraph, self.query, self.answer, self.label = shuffle(self.paragraph, self.query, self.answer, self.label)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set.', file=sys.stderr)
 
+    def _para_index(self, j):
+        words = j.split(' ')
+        index = 0
+        word2index = {}
+        index2word = {}
+        for word in words:
+            word2index[word] = index
+            index2word[index] = word
+            index += 1
+        para = {
+            'word2index': word2index,
+            'index2word': index2word
+        }
+        return para
+
     def _figure_pn(self, passage):
         positive = []
         negative = []
@@ -83,6 +101,9 @@ class Marco_dataset():
             try:
                 index = self._vocab.vocab2index[i]
             except KeyError:
-                index = 0
+                try:
+                    index = self._paragraph_word['word2index'][i] + hp.vocab_size
+                except KeyError:
+                    index = 0
             rst.append(index)
         return rst
