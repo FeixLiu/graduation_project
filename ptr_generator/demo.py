@@ -1,6 +1,6 @@
 import tensorflow as tf
-from marco_dataset import Marco_dataset
-from load_glove import Load_glove
+from load_marco import Marco_dataset
+from load_dict import Load_glove
 from hyperparameters import Hyperparameters as hp
 from bert import Bert_server
 import numpy as np

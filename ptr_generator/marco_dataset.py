@@ -4,7 +4,7 @@ import json
 import sys
 import nltk
 from tqdm import tqdm
-from load_glove import Load_glove
+from load_dict import Load_glove
 
 
 class Marco_dataset():
@@ -67,7 +67,7 @@ class Marco_dataset():
                 self.label.append([1., 0.])
             '''
         self.total = index
-        self.paragraph, self.query, self.answer, self.label = shuffle(self.paragraph, self.query, self.answer, self.label)
+        self.paragraph, self.query, self.answer, self.label, self.answer_index = shuffle(self.paragraph, self.query, self.answer, self.label, self.answer_index)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set.', file=sys.stderr)
 
     def _para_index(self, j):

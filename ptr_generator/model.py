@@ -1,11 +1,11 @@
 from BiDAF import BiDAF
-from marco_dataset import Marco_dataset
+from load_marco import Marco_dataset
 from hyperparameters import Hyperparameters as hp
 from bert import Bert_server
 import numpy as np
 import tensorflow as tf
 import os
-from load_glove import Load_glove
+from load_dict import Load_glove
 from ptr_generator import PTR_Gnerator
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -114,64 +114,14 @@ with tf.device('/gpu:0'):
                 xt=xt,
                 bptr=bptr
             )
-            answer_prob = tf.expand_dims(tf.gather_nd(p_overall, words_indice), axis=1)
-            no_pgen = tf.greater(
-                tf.expand_dims(
-                    tf.gather_nd(
-                        words_indice,
-                        [[0, 1], [1, 1], [2, 1], [3, 1]]
-                    ),
-                    axis=1
-                ),
-                vocab_size
+            LOSS += ptrg.loss(
+                p_overall=p_overall,
+                words_indice=words_indice,
+                vocab_size=vocab_size,
+                pgen=pgen,
+                at=at,
+                coverage_vector_t=coverage_vector_t
             )
-            no_pgen = tf.cast(no_pgen, tf.float32)
-            yes_pgen = tf.less_equal(
-                tf.expand_dims(
-                    tf.gather_nd(
-                        words_indice,
-                        [[0, 1], [1, 1], [2, 1], [3, 1]]
-                    ),
-                    axis=1
-                ),
-                vocab_size
-            )
-            yes_pgen = tf.cast(yes_pgen, tf.float32)
-            p_w_t = tf.math.add(
-                tf.math.multiply(
-                    tf.math.multiply(
-                        answer_prob,
-                        no_pgen
-                    ),
-                    (1. - pgen)
-                ),
-                tf.math.multiply(
-                    tf.math.multiply(
-                        answer_prob,
-                        yes_pgen
-                    ),
-                    pgen
-                )
-            )
-            loss_prob_t = tf.reduce_sum(0 - tf.math.log(tf.clip_by_value(p_w_t, 1e-8, 1.0)), axis=0)
-            agc = tf.cast(tf.greater(at, coverage_vector_t), tf.float32)
-            cga = tf.cast(tf.greater(coverage_vector_t, at), tf.float32)
-            covloss_t = tf.reduce_sum(
-                tf.add(
-                    tf.math.multiply(
-                        at,
-                        agc
-                    ),
-                    tf.math.multiply(
-                        coverage_vector_t,
-                        cga
-                    )
-                ),
-                axis=1
-            )
-            covloss_t = tf.reduce_sum(covloss_t, axis=0)
-            LOSS += tf.math.multiply(hp.alpha, covloss_t)
-            LOSS += loss_prob_t
 
     LOSS /= hp.max_seq_length
     train_op = tf.train.GradientDescentOptimizer(hp.learning_rate).minimize(LOSS)
