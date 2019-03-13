@@ -1,7 +1,7 @@
 from hyperparameters import Hyperparameters as hp
 import tensorflow as tf
 from BiDAF import BiDAF
-from load_marco import Marco_dataset as md
+from marco_dataset import Marco_dataset as md
 from bert import Bert_server as bs
 from activation import *
 from BiLSTM import BiLSTM
@@ -9,10 +9,10 @@ from utils import *
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-with tf.device('/gpu:1'):
+with tf.device('/cpu'):
     with tf.variable_scope('bert_service', reuse=tf.AUTO_REUSE):
         bert = bs()
-    marco_train = md(path=hp.marco_train_path)
+    #marco_train = md(path=hp.marco_train_path)
     marco_dev = md(path=hp.marco_dev_path)
     para_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
     qas_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.bert_embedding_size])
@@ -28,6 +28,7 @@ with tf.device('/gpu:1'):
             hidden_units=hp.bert_embedding_size
         ).fuse_vector
 
+    '''
     with tf.variable_scope('attentionBiGRU', reuse=tf.AUTO_REUSE):
         relu_fuse_vector = LinearRelu3d(
             inputs=fuse_vector,
@@ -47,6 +48,7 @@ with tf.device('/gpu:1'):
         bidaf_outputs = bidaf_lstm.outputs
         bidaf_states = bidaf_lstm.states
         bidafBiLSTM = tf.concat([bidaf_outputs[0], bidaf_outputs[1]], axis=2)
+        
 
 with tf.device('/gpu:0'):
     with tf.variable_scope('selfAttention', reuse=tf.AUTO_REUSE):
@@ -63,10 +65,11 @@ with tf.device('/gpu:0'):
             inputs_size=8 * hp.bidaf_lstm_hidden_units,
             outputs_size=hp.bidaf_lstm_hidden_units
         ).relu
-
+    '''
     with tf.variable_scope('prediction', reuse=tf.AUTO_REUSE):
-        attention_sum = tf.add(relu_fuse_vector, relu_self_fuse_vector)
-        sum_embedding = tf.reduce_sum(attention_sum, axis=2)
+        #attention_sum = tf.add(relu_fuse_vector, relu_self_fuse_vector)
+        #sum_embedding = tf.reduce_sum(attention_sum, axis=2)
+        sum_embedding = tf.reduce_sum(fuse_vector, axis=2)
         prediction = Lineartanh2d(
             inputs=sum_embedding,
             inputs_size=hp.max_seq_length,
@@ -81,15 +84,16 @@ with tf.device('/gpu:0'):
 
     init = tf.global_variables_initializer()
 
-    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True,log_device_placement=True)) as sess:
+    #with tf.Session(config=tf.ConfigProto(allow_soft_placement=True,log_device_placement=True)) as sess:
+    with tf.Session() as sess:
         sess.run(init)
         train_index = 0
         test_index = 0
         for _ in range(hp.epoch):
-            for i in range(int(marco_train.total / hp.batch_size) + 1):
-                refc = marco_train.paragraph[train_index:train_index + hp.batch_size]
-                refq = marco_train.query[train_index:train_index + hp.batch_size]
-                label = marco_train.label[train_index:train_index + hp.batch_size]
+            for i in range(int(marco_dev.total / hp.batch_size) + 1):
+                refc = marco_dev.paragraph[train_index:train_index + hp.batch_size]
+                refq = marco_dev.query[train_index:train_index + hp.batch_size]
+                label = marco_dev.label[train_index:train_index + hp.batch_size]
                 train_index += hp.batch_size
 
                 refc = bert.convert2vector(refc)
@@ -102,7 +106,8 @@ with tf.device('/gpu:0'):
                     keep_prob: hp.keep_prob
                 }
                 sess.run(train_op, feed_dict=feed_dict)
-
+                print('Loss:', sess.run(loss, feed_dict=feed_dict))
+                '''
                 if i % hp.test_iter == 0:
                     print('Train loss', sess.run(loss, feed_dict=feed_dict))
                     test_refc = marco_dev.paragraph[test_index:test_index + hp.batch_size]
@@ -120,3 +125,4 @@ with tf.device('/gpu:0'):
                         keep_prob: hp.keep_prob
                     }
                     print('Test loss:', sess.run(loss, feed_dict=feed_dict))
+                    '''

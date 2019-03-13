@@ -12,9 +12,11 @@
 20190308:过三八妇女节。
 20190309:准备并完成哥伦比亚大学的面试。
 20190310:开发ptr generator network，等待计算p(w)
-20190313:完成ptr generator network。p(w)：将pvocab与at concat之后，来求。在读入Marco的时候对answer编码进行扩充。将OOV的index计算出来。
+20190311:完成ptr generator network。p(w)：将pvocab与at concat之后，来求。在读入Marco的时候对answer编码进行扩充。将OOV的index计算出来。
+20190312:优化Marco存储。[ [paragraph k], [query], [answer], [label k], [answer index]]
+20190313:获得自己的词表（词频统计）。
 
 接下来任务：
+计算自己的小词表。
 再开发一个ptr。
-如何优化Marco的存储。
 如何优化模型，现在的模型太大了。如何精简？
