@@ -15,7 +15,7 @@
 20190311:完成ptr generator network。p(w)：将pvocab与at concat之后，来求。在读入Marco的时候对answer编码进行扩充。将OOV的index计算出来。
 20190312:优化Marco存储。[ [paragraph k], [query], [answer], [label k], [answer index]]
 20190313:获得自己的词表（词频统计）。
-20190314:建立bidaf_classification的精简版。问题：loss全是0。
+20190314:建立bidaf_classification的精简版。
 
 接下来任务：
 计算自己的小词表。

@@ -4,6 +4,9 @@ from sklearn.utils import shuffle
 import sys
 import numpy as np
 
+from hyperparameters import Hyperparameters as hp
+import load_dict
+
 
 class load_marco():
     """
@@ -91,7 +94,10 @@ class load_marco():
             para_temp.append(passage[j]['passage_text'])
         while len(label_temp) < 10:
             label_temp.append([0.])
-            para_temp.append([0 for _ in range(self._max_seq_length)])
+            temp = ''
+            for _ in range(self._max_seq_length):
+                temp += '<UNK> '
+            para_temp.append(temp)
         return label_temp, para_temp
 
     def _conver_answer(self, answer):

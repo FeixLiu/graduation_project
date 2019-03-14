@@ -38,7 +38,7 @@ class classification():
         classify_weights2 = tf.Variable(tf.random_normal(shape=[self._bert_embedding_size, 1]), dtype=tf.float32)
         classify_biases2 = tf.Variable(tf.constant(0.1, shape=[1, 1]), dtype=tf.float32)
         classify_inter = tf.add(tf.matmul(fuse, classify_weights1), classify_biases1)
-        class_vector = tf.add(tf.matmul(tf.nn.relu(classify_inter), classify_weights2), classify_biases2)
+        class_vector = tf.add(tf.matmul(tf.nn.tanh(classify_inter), classify_weights2), classify_biases2)
         class_vector = tf.reshape(class_vector, shape=[-1, self._max_seq_length, 1])
         class_vector = tf.reduce_sum(class_vector, axis=1)
         return class_vector

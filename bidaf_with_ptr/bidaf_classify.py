@@ -49,7 +49,8 @@ with tf.device('/cpu'):
         bert_embedding_size=hp.bert_embedding_size
     ).class_vector
 
-    loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=label, logits=classification_vector), axis=1)
+    #loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=label, logits=classification_vector), axis=1)
+    loss = tf.reduce_sum(tf.nn.weighted_cross_entropy_with_logits(targets=label, logits=classification_vector, pos_weight=hp.pos_weight), axis=0)
     train_op = tf.train.GradientDescentOptimizer(learning_rate=hp.learning_rate).minimize(loss)
 
     init = tf.global_variables_initializer()
@@ -69,6 +70,6 @@ with tf.device('/cpu'):
                     label: label_input
                 }
                 sess.run(train_op, feed_dict=dict)
-                print(sess.run(classification_vector, feed_dict=dict))
+                print(sess.run(loss, feed_dict=dict))
                 #if i % hp.test_iter == 0:
                     #print(sess.run(loss, feed_dict=dict))
