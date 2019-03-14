@@ -1,3 +1,9 @@
+"""
+this script is used for extracting the vocabulary from the marco dataset
+for project's reasons, the hyper-parameters have been changed after running this script
+therefore, this script cannot be operated anymore
+"""
+
 from hyperparameters import Hyperparameters as hp
 import json
 import nltk

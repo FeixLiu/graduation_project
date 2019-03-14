@@ -1,4 +1,7 @@
-class Load_dict():
+import sys
+
+
+class load_dict():
     """
     self._path (string): the path of the words set
     self.vocab2index (dictionary): the vocab to index dictionary
@@ -31,4 +34,4 @@ class Load_dict():
                 index += 1
                 self.vocab2index[row] = index
                 self.index2vocab[index] = row
-
+        print('Loaded vocabulary from:', self._path, file=sys.stderr)

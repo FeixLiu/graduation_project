@@ -1,14 +1,16 @@
-from hyperparameters import Hyperparameters as hp
-from load_dict import Load_dict
 import nltk
 import json
 from sklearn.utils import shuffle
+import sys
+import numpy as np
 
 
 class load_marco():
     """
     self._path (string): the path of the marco dataset
     self._vocab (dictionary): the word index dictionary
+    self._max_seq_length: max sequence length of the answer, query and paragraph
+    self._max_para: max paragraphs each passage has
     self.passage (list): the text of the passage,
         saved as [[para1, para2, ..., para10], ..., [para1, para2, ..., para10]]
     self.label (list): whether the paragraph can answer the query or not,
@@ -20,14 +22,18 @@ class load_marco():
     self.total (int): how many query-answer-answer_index-label-passage pairs the dataset has
         equal with len(query), len(answer), len(answer_index), len(label), len(passage)
     """
-    def __init__(self, path, vocab):
+    def __init__(self, path, vocab, max_seq_length, max_para):
         """
         function: initialize the class
         :param path (string): the path of the marco dataset
         :param vocab (dictionary): the word index dictionary
+        :param max_seq_length (int): max sequence length of the answer, query and paragraph
+        :param max_para (int): max paragraphs each passage has
         """
         self._path = path
         self._vocab = vocab
+        self._max_seq_length = max_seq_length
+        self._max_para = max_para
         self._load_marco()
 
     def _load_marco(self):
@@ -63,6 +69,9 @@ class load_marco():
             self.question,
             self.answer_index
         )
+        self.label = np.array(self.label)
+        self.answer_index = np.array(self.answer_index)
+        print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set from:', self._path, file=sys.stderr)
 
     def _conver_para(self, passage):
         """
@@ -76,13 +85,13 @@ class load_marco():
         label_temp = []
         para_temp = []
         for j in range(len(passage)):
-            if j == hp.max_para:
+            if j == self._max_para:
                 break
-            label_temp.append(passage[j]['is_selected'])
+            label_temp.append([float(passage[j]['is_selected'])])
             para_temp.append(passage[j]['passage_text'])
         while len(label_temp) < 10:
-            label_temp.append(0)
-            para_temp.append([0 for _ in range(hp.max_text_length)])
+            label_temp.append([0.])
+            para_temp.append([0 for _ in range(self._max_seq_length)])
         return label_temp, para_temp
 
     def _conver_answer(self, answer):
@@ -92,7 +101,6 @@ class load_marco():
         :return answer (string): modified answer
         """
         answer_token = nltk.word_tokenize(answer)
-        print(answer_token)
         answer_token.insert(0, '<Start>')
         answer_token.append('<End>')
         answer = ''
@@ -143,8 +151,3 @@ class load_marco():
             'index2word': index2word
         }
         return para_word
-
-
-vocab = Load_dict(hp.word)
-load_marco(hp.marco_dev_path, vocab)
-#load_marco(hp.marco_train_path, vocab)
