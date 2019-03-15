@@ -12,7 +12,10 @@ class Hyperparameters():
     max_seq_length = 64
     bert_embedding_size = 768
     pos_weight = 0.1
+    ptr_conv_beta = 0.5
+    attention_inter_size = 256
     learning_rate = 0.0000001
     pos_para = 2
     epoch = 10
     test_iter = 20
+    keep_prob = 0.5

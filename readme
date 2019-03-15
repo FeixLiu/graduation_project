@@ -16,8 +16,4 @@
 20190312:优化Marco存储。[ [paragraph k], [query], [answer], [label k], [answer index]]
 20190313:获得自己的词表（词频统计）。
 20190314:建立bidaf_classification的精简版。
-
-接下来任务：
-计算自己的小词表。
-再开发一个ptr。
-如何优化模型，现在的模型太大了。如何精简？
+20190315:实现valid paragraph的提取，开始着手优化ptr generator networks。
