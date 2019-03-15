@@ -9,7 +9,7 @@ from load_dict import load_dict
 from BiDAF import BiDAF
 from classification_vector import classification
 from bert import bert_server
-
+from extract_valid_para import extract_valid
 
 vocab = load_dict(path=hp.word)
 marco_dev = load_marco(
@@ -49,9 +49,26 @@ with tf.device('/cpu'):
         bert_embedding_size=hp.bert_embedding_size
     ).class_vector
 
-    #loss = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=label, logits=classification_vector), axis=1)
-    loss = tf.reduce_sum(tf.nn.weighted_cross_entropy_with_logits(targets=label, logits=classification_vector, pos_weight=hp.pos_weight), axis=0)
-    train_op = tf.train.GradientDescentOptimizer(learning_rate=hp.learning_rate).minimize(loss)
+    loss_class = tf.reduce_sum(
+        tf.reduce_sum(
+            tf.nn.weighted_cross_entropy_with_logits(
+                targets=label,
+                logits=classification_vector,
+                pos_weight=hp.pos_weight),
+            axis=0
+        ),
+        axis=0
+    )
+
+    valid_para = extract_valid(
+        fuse_vector=fuse_vector,
+        classification_vector=classification_vector,
+        max_seq=hp.max_seq_length,
+        embd_size=4 * hp.bert_embedding_size,
+        pos_para=hp.max_para
+    ).valid_para
+
+    train_op = tf.train.GradientDescentOptimizer(learning_rate=hp.learning_rate).minimize(loss_class)
 
     init = tf.global_variables_initializer()
 
@@ -70,6 +87,4 @@ with tf.device('/cpu'):
                     label: label_input
                 }
                 sess.run(train_op, feed_dict=dict)
-                print(sess.run(loss, feed_dict=dict))
-                #if i % hp.test_iter == 0:
-                    #print(sess.run(loss, feed_dict=dict))
+                print(sess.run(loss_class, feed_dict=dict))

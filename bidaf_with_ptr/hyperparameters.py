@@ -13,5 +13,6 @@ class Hyperparameters():
     bert_embedding_size = 768
     pos_weight = 0.1
     learning_rate = 0.0000001
+    pos_para = 2
     epoch = 10
     test_iter = 20
