@@ -17,3 +17,4 @@
 20190313:获得自己的词表（词频统计）。
 20190314:建立bidaf_classification的精简版。
 20190315:实现valid paragraph的提取，开始着手优化ptr generator networks。
+20190316:向bidaf classification中加入tensorboard的可视化以及模型的saver。

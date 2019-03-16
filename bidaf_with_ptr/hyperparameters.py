@@ -16,6 +16,8 @@ class Hyperparameters():
     attention_inter_size = 256
     learning_rate = 0.0000001
     pos_para = 2
-    epoch = 10
+    epoch = 400
+    save_model_epoch = 100
+    max_to_keep = 10
     test_iter = 20
     keep_prob = 0.5
