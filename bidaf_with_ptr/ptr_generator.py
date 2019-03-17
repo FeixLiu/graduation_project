@@ -72,6 +72,25 @@ class PTR_Gnerator():
         return at
 
     def pointer(self, wh, hstar_t, ws, st, wx, xt, bptr):
+        """
+        function: get the pointer of the generation
+        :param wh (tensor): the weight vector for the h_start_t
+            shape: [4 * bert_embedding_size, 1]
+        :param hstar_t (tensor): the context vector
+            shape: [1, 4 * bert_embedding_size]
+        :param ws (tensor):  the weight vector for the st
+            shape: [bert_embedding_size, 1]
+        :param st (tensor): the final state of the answer embedding at time t
+            shape: [1, bert_embedding_size]
+        :param wx (tensor): the weight vector for the xt
+            shape: [bert_embedding_size, 1]
+        :param xt (tensor): the last word's embedding of the answer at time t
+            shape: [1, bert_embedding_size]
+        :param bptr (tensor): the biases vector for the pointer
+            shape: [1, 1]
+        :return pgen (tensor): the pointer of the generation
+            shape: [1]
+        """
         pgen = tf.nn.sigmoid(
             tf.add(
                 tf.add(
@@ -93,10 +112,23 @@ class PTR_Gnerator():
                 bptr
             )
         )
-        return pgen
+        return tf.reshape(pgen, shape=[1])
 
     def pvocab(self, st, hstar_t, w, b):
-        pvocab_pre = tf.concat([hstar_t, st], axis=1)
+        """
+        function: get the probability over all words from the context vector and the answer embedding
+        :param st (tensor): the last state of the answer embedding at time t
+            shape: [bert_embedding_size, ]
+        :param hstar_t (tensor): the context vector
+            shape: [4 * bert_embedding_size, ]
+        :param w (tensor): the weight vector
+            shape: [5 * bert_embedding_size, vocab_size]
+        :param b (tensor): the biases vector
+            shape: [1, vocab_size]
+        :return pvocab (tensor): the probability over all words
+            shape: [1, vocab_size]
+        """
+        pvocab_pre = tf.expand_dims(tf.concat([hstar_t, st], axis=0), axis=0)
         pvocab = tf.nn.softmax(
             tf.nn.tanh(
                 tf.add(
@@ -111,25 +143,39 @@ class PTR_Gnerator():
         return pvocab
 
     def loss(self, p_overall, words_indice, vocab_size, pgen, at, coverage_vector_t):
+        """
+        function: calculate the loss for the time t
+        :param p_overall (tensor): the all probability over both vocabulary and the paragraph
+            shape: [1, voacb_size + max_seq_length]
+        :param words_indice (tensor): the current answer's input word for for the time t
+            shape: [1, 1]
+        :param vocab_size (tensor): the vocab size
+            shape: [1]
+        :param pgen (tensor): the pointer for generation
+            shape: [1, 1]
+        :param at (tensor): the attention vector
+            shape: [max_seq_length, 1]
+        :param coverage_vector_t (tensor): the coverage vector
+            shape: [max_seq_length, 1]
+        :return loss (int): the loss for time t
+        """
         answer_prob = tf.expand_dims(tf.gather_nd(p_overall, words_indice), axis=1)
-        no_pgen = tf.greater(
-            tf.expand_dims(
-                tf.gather_nd(
+        c = tf.gather_nd(
                     words_indice,
-                    [[0, 1], [1, 1], [2, 1], [3, 1]]
-                ),
-                axis=1
+                    [[0, 1]]
+                )
+        no_pgen = tf.greater(
+            tf.gather_nd(
+                words_indice,
+                [[0, 1]]
             ),
             vocab_size
         )
         no_pgen = tf.cast(no_pgen, tf.float32)
         yes_pgen = tf.less_equal(
-            tf.expand_dims(
-                tf.gather_nd(
-                    words_indice,
-                    [[0, 1], [1, 1], [2, 1], [3, 1]]
-                ),
-                axis=1
+            tf.gather_nd(
+                words_indice,
+                [[0, 1]]
             ),
             vocab_size
         )

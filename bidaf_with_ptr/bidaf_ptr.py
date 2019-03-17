@@ -65,12 +65,28 @@ with tf.device('/cpu'):
     batten = tf.Variable(tf.constant(0.1, shape=[1, hp.attention_inter_size]), dtype=tf.float32)
     V = tf.Variable(tf.random_normal(shape=[hp.attention_inter_size, 1]), dtype=tf.float32)
 
+    # all variables for pvocab
+    pvocab_w = tf.Variable(tf.random_normal(shape=[5 * hp.bert_embedding_size, hp.vocab_size]), dtype=tf.float32)
+    pvocab_b = tf.Variable(tf.constant(0.1, shape=[1, hp.vocab_size]), dtype=tf.float32)
+
+    # all variables for pointer
+    wh = tf.Variable(tf.random_normal(shape=[4 * hp.bert_embedding_size, 1]), dtype=tf.float32)
+    ws = tf.Variable(tf.random_normal(shape=[hp.bert_embedding_size, 1]), dtype=tf.float32)
+    wx = tf.Variable(tf.random_normal(shape=[hp.bert_embedding_size, 1]), dtype=tf.float32)
+    bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]))
+
+    # variable for calculate loss
+    vocab_size = tf.Variable(tf.constant(hp.vocab_size, shape=[1]), trainable=False)
+
+    LOSS = 0
+
     with tf.variable_scope('ptr_generator', reuse=tf.AUTO_REUSE):
         for index in range(hp.max_seq_length):
             indices = [index]
             st = tf.gather_nd(answer_embd, indices)
             set = tf.expand_dims(st, 0)
             xt = tf.gather_nd(answer_word_embd, indices)
+            word_indice = tf.gather_nd(answer_indices, indices)
             at = ptrg.attention(
                 Wh=Wh,
                 H=fuse_vector,
@@ -81,6 +97,41 @@ with tf.device('/cpu'):
                 batten=batten,
                 v=V
             )
+
             coverage_vector_t = tf.add(coverage_vector_t, at)
             attention_t = tf.tile(at, [1, 4 * hp.bert_embedding_size])
             h_star_t = tf.reduce_sum(tf.multiply(fuse_vector, attention_t), axis=0)
+
+            pvocab = ptrg.pvocab(
+                hstar_t=h_star_t,
+                st=st,
+                w=pvocab_w,
+                b=pvocab_b
+            )
+            p_overall = tf.concat([pvocab, tf.reshape(at, shape=[-1, hp.max_seq_length])], axis=1)
+
+            pgen = ptrg.pointer(
+                wh=wh,
+                hstar_t=tf.expand_dims(h_star_t, axis=0),
+                ws=ws,
+                st=tf.expand_dims(st, axis=0),
+                wx=wx,
+                xt=tf.expand_dims(xt, axis=0),
+                bptr=bptr
+            )
+
+            LOSS += ptrg.loss(
+                p_overall=p_overall,
+                words_indice=tf.expand_dims(word_indice, axis=0),
+                vocab_size=vocab_size,
+                pgen=pgen,
+                at=at,
+                coverage_vector_t=coverage_vector_t
+            )
+
+    LOSS = tf.reduce_sum(LOSS, axis=0)
+    LOSS /= hp.max_seq_length
+    train_op = tf.train.GradientDescentOptimizer(hp.learning_rate).minimize(LOSS)
+
+    init = tf.global_variables_initializer()
+

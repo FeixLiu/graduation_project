@@ -17,7 +17,9 @@ class Hyperparameters():
     learning_rate = 0.0000001
     pos_para = 2
     epoch = 400
+    vocab_size = 38761
     save_model_epoch = 100
+    loss_acc_iter = 100
     max_to_keep = 10
     test_iter = 20
     keep_prob = 0.5
