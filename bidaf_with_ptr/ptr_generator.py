@@ -160,10 +160,6 @@ class PTR_Gnerator():
         :return loss (int): the loss for time t
         """
         answer_prob = tf.expand_dims(tf.gather_nd(p_overall, words_indice), axis=1)
-        c = tf.gather_nd(
-                    words_indice,
-                    [[0, 1]]
-                )
         no_pgen = tf.greater(
             tf.gather_nd(
                 words_indice,
@@ -215,4 +211,5 @@ class PTR_Gnerator():
         covloss_t = tf.reduce_sum(covloss_t, axis=0)
         loss = tf.math.multiply(self._ptr_conv_beta, covloss_t) + loss_prob_t
         return loss
+
 

@@ -19,9 +19,11 @@ class load_marco():
     self.label (list): whether the paragraph can answer the query or not,
         saved as [[para1_label, para2_label, ..., para10_label], ..., [para1_label, para2_label, ..., para10_label]]
     self.answer (list): the answer for the query, saved as [answer1, answer2, ..., answerN]
+    self.answer_word (list): the words level answer,
+        saved as [[[word1], [word2], ..., [wordQ]], ..., [[word1], [word2], ..., [wordP]]]
     self.question (list): the question list, saved as [query1, query2, ..., queryN]
     self.answer_index (list): the word index of the answer,
-        saved as [[word1, word2, ..., wordQ], ..., [word1, word2, workP]]
+        saved as [[[0, word1], [0, word2], ..., [0, wordQ], ..., [0, 0]], ..., [[0, word1], [0, word2], ..., [0, word64]]]
     self.total (int): how many query-answer-answer_index-label-passage pairs the dataset has
         equal with len(query), len(answer), len(answer_index), len(label), len(passage)
     """
@@ -46,6 +48,7 @@ class load_marco():
         self.passage = []
         self.label = []
         self.answer = []
+        self.answer_word = []
         self.question = []
         self.answer_index = []
         with open(self._path, 'r') as file:
@@ -55,15 +58,16 @@ class load_marco():
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
-            answer = self._conver_answer(answer)
+            answer = self._convert_answer(answer)
             passage = data['passages'][i]
-            label_temp, para_temp = self._conver_para(passage)
+            label_temp, para_temp = self._convert_para(passage)
             self.passage.append(para_temp)
             self.label.append(label_temp)
             self.answer.append(answer)
+            self.answer_word.append(self._convert2words(answer))
             self.question.append(query)
             para_word = self._para_index(para_temp, label_temp)
-            answer_index = self._conver2index(answer, para_word)
+            answer_index = self._convert2index(answer, para_word)
             self.answer_index.append(answer_index)
         self.passage, self.label, self.answer, self.question, self.answer_index = shuffle(
             self.passage,
@@ -76,11 +80,21 @@ class load_marco():
         self.answer_index = np.array(self.answer_index)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set from:', self._path, file=sys.stderr)
 
-    def _conver_para(self, passage):
+    def _convert2words(self, answer):
+        """
+        function: convert the answer to the words level saving
+        :param answer (string): the origin answer
+        :return answer_word (list): the words level saving
+        """
+        answer_word = []
+        for word in answer.split(' '):
+            answer_word.append(word)
+        return answer_word
+
+    def _convert_para(self, passage):
         """
         function: convert the passage dictionary to two lists
         :param passage (dictionary): all paragraphs of the passage
-
         note: each passage has up to 10 paragraphs, if not enough, padding with 0
         :return label_temp (list): whether the paragraph can answer the query or not
         :return para_temp (list): the paragraph
@@ -100,7 +114,7 @@ class load_marco():
             para_temp.append(temp)
         return label_temp, para_temp
 
-    def _conver_answer(self, answer):
+    def _convert_answer(self, answer):
         """
         function: tokenize the answer and add <Start> and <End> token and add space between word and punctuation
         :param answer (string): the answer
@@ -116,7 +130,7 @@ class load_marco():
         answer = answer.strip()
         return answer
 
-    def _conver2index(self, answer, para_word):
+    def _convert2index(self, answer, para_word):
         """
         function: convert the answer to the word index
         :param answer (string): the answer
@@ -132,7 +146,9 @@ class load_marco():
                     index = para_word['word2index'][word]
                 except KeyError:
                     index = 0
-            answer_index.append(index)
+            answer_index.append([0, index])
+        while len(answer_index) < self._max_seq_length:
+            answer_index.append([0, 0])
         return answer_index
 
     def _para_index(self, para, label):

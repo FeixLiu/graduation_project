@@ -14,69 +14,7 @@ from BiDAF import BiDAF
 from bert import bert_server
 from ptr_generator import PTR_Gnerator
 
-
-def cond(LOSS, index):
-    return index < hp.max_seq_length
-
-
-def get_loss(LOSS, index):
-    global answer_embd, answer_word_embd, answer_indices, Wh, fuse_vector, Ws, wc, coverage_vector_t
-    global batten, V, pvocab_w, pvocab_b, wh, ws, wx, bptr, vocab_size
-    ptrg = PTR_Gnerator(
-        bert_embedding_size=hp.bert_embedding_size,
-        max_seq_length=hp.max_seq_length,
-        ptr_conv_beta=hp.ptr_conv_beta
-    )
-    indices = [index]
-    st = tf.gather_nd(answer_embd, indices)
-    set = tf.expand_dims(st, 0)
-    xt = tf.gather_nd(answer_word_embd, indices)
-    word_indice = tf.gather_nd(answer_indices, indices)
-    at = ptrg.attention(
-        Wh=Wh,
-        H=fuse_vector,
-        Ws=Ws,
-        st=set,
-        wc=wc,
-        coverage=coverage_vector_t,
-        batten=batten,
-        v=V
-    )
-
-    coverage_vector_t = tf.add(coverage_vector_t, at)
-    attention_t = tf.tile(at, [1, 4 * hp.bert_embedding_size])
-    h_star_t = tf.reduce_sum(tf.multiply(fuse_vector, attention_t), axis=0)
-
-    pvocab = ptrg.pvocab(
-        hstar_t=h_star_t,
-        st=st,
-        w=pvocab_w,
-        b=pvocab_b
-    )
-    p_overall = tf.concat([pvocab, tf.reshape(at, shape=[-1, hp.max_seq_length])], axis=1)
-
-    pgen = ptrg.pointer(
-        wh=wh,
-        hstar_t=tf.expand_dims(h_star_t, axis=0),
-        ws=ws,
-        st=tf.expand_dims(st, axis=0),
-        wx=wx,
-        xt=tf.expand_dims(xt, axis=0),
-        bptr=bptr
-    )
-
-    LOSS += ptrg.loss(
-        p_overall=p_overall,
-        words_indice=tf.expand_dims(word_indice, axis=0),
-        vocab_size=vocab_size,
-        pgen=pgen,
-        at=at,
-        coverage_vector_t=coverage_vector_t
-    )
-
-    return LOSS, index + 1
-
-
+'''
 vocab = load_dict(path=hp.word)
 marco_dev = load_marco(
     vocab=vocab,
@@ -84,6 +22,7 @@ marco_dev = load_marco(
     max_seq_length=hp.max_seq_length,
     max_para=hp.max_para
 )
+'''
 
 '''
 marco_train = load_marco(
@@ -95,7 +34,7 @@ marco_train = load_marco(
 '''
 
 with tf.device('/cpu:0'):
-    bert = bert_server()
+    #bert = bert_server()
 
     # batch size is one
     # in later version the max_seq_length of the passage will be doubled
@@ -114,7 +53,13 @@ with tf.device('/cpu:0'):
     ).fuse_vector
     fuse_vector = tf.reshape(fuse_vector, shape=[hp.max_seq_length, 4 * hp.bert_embedding_size])
 
-    coverage_vector_t = tf.Variable(tf.constant(0., shape=[hp.max_seq_length, 1]), dtype=tf.float32, trainable=False)
+    ptrg = PTR_Gnerator(
+        bert_embedding_size=hp.bert_embedding_size,
+        max_seq_length=hp.max_seq_length,
+        ptr_conv_beta=hp.ptr_conv_beta
+    )
+
+    coverage_vector_t = tf.Variable(tf.zeros(shape=[hp.max_seq_length, 1]))
 
     # all variables for attention
     Wh = tf.Variable(tf.random_normal(shape=[4 * hp.bert_embedding_size, hp.attention_inter_size]), dtype=tf.float32)
@@ -136,11 +81,56 @@ with tf.device('/cpu:0'):
     # variable for calculate loss
     vocab_size = tf.Variable(tf.constant(hp.vocab_size, shape=[1]), trainable=False)
 
-    LOSS = tf.constant(0., shape=[1])
+    LOSS = 0
 
     with tf.variable_scope('ptr_generator', reuse=tf.AUTO_REUSE):
-        index = 0
-        LOSS, index = tf.while_loop(cond, get_loss, [LOSS, index], parallel_iterations=1)
+        for index in range(hp.max_seq_length):
+            indices = [index]
+            st = tf.gather_nd(answer_embd, indices)
+            set = tf.expand_dims(st, 0)
+            xt = tf.gather_nd(answer_word_embd, indices)
+            word_indice = tf.gather_nd(answer_indices, indices)
+            at = ptrg.attention(
+                Wh=Wh,
+                H=fuse_vector,
+                Ws=Ws,
+                st=set,
+                wc=wc,
+                coverage=coverage_vector_t,
+                batten=batten,
+                v=V
+            )
+
+            coverage_vector_t = tf.add(coverage_vector_t, at)
+            attention_t = tf.tile(at, [1, 4 * hp.bert_embedding_size])
+            h_star_t = tf.reduce_sum(tf.multiply(fuse_vector, attention_t), axis=0)
+
+            pvocab = ptrg.pvocab(
+                hstar_t=h_star_t,
+                st=st,
+                w=pvocab_w,
+                b=pvocab_b
+            )
+            p_overall = tf.concat([pvocab, tf.reshape(at, shape=[-1, hp.max_seq_length])], axis=1)
+
+            pgen = ptrg.pointer(
+                wh=wh,
+                hstar_t=tf.expand_dims(h_star_t, axis=0),
+                ws=ws,
+                st=tf.expand_dims(st, axis=0),
+                wx=wx,
+                xt=tf.expand_dims(xt, axis=0),
+                bptr=bptr
+            )
+
+            LOSS += ptrg.loss(
+                p_overall=p_overall,
+                words_indice=tf.expand_dims(word_indice, axis=0),
+                vocab_size=vocab_size,
+                pgen=pgen,
+                at=at,
+                coverage_vector_t=coverage_vector_t
+            )
 
     LOSS = tf.reduce_sum(LOSS, axis=0)
     loss = LOSS / hp.max_seq_length
@@ -148,6 +138,7 @@ with tf.device('/cpu:0'):
 
     init = tf.global_variables_initializer()
 
+    '''
     with tf.Session() as sess:
         sess.run(init)
         for epoch in range(hp.epoch):
@@ -178,5 +169,6 @@ with tf.device('/cpu:0'):
                     answer_indices: answer_index
                 }
                 sess.run(train_op, feed_dict=dict)
-                print(sess.run(loss, feed_dict=dict))
+                print(sess.run(st, feed_dict=dict))
+            '''
 

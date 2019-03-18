@@ -19,3 +19,9 @@
 20190315:实现valid paragraph的提取，开始着手优化ptr generator networks。
 20190316:向bidaf classification中加入tensorboard的可视化以及模型的saver。继续完善generator network，LOSS计算有问题。
 20190317:重构generator network的computational graph。
+20190318:生成网络的输入读入。加入tf.while_loop的API。生成网络测试可运行。
+
+接下来：
+生成网络的loss，acc可视化。
+优化分类模型。
+实现transformer
