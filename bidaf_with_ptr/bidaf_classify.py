@@ -7,12 +7,13 @@ from load_dict import load_dict
 from BiDAF import BiDAF
 from classification_vector import classification
 from bert import bert_server
+from BiLSTM import BiLSTM
 from extract_valid_para import extract_valid
 
 vocab = load_dict(path=hp.word)
 marco_train = load_marco(
     vocab=vocab,
-    path=hp.marco_train_path,
+    path=hp.marco_dev_path,
     max_seq_length=hp.max_seq_length,
     max_para=hp.max_para
 )
@@ -41,9 +42,16 @@ with tf.device('/gpu:1'):
         hidden_units=hp.bert_embedding_size
     ).fuse_vector
 
+    features = BiLSTM(
+        inputs=fuse_vector,
+        time_steps=hp.max_seq_length,
+        hidden_units=4 * hp.bert_embedding_size,
+        batch_size=hp.max_para,
+    ).result
+
     classification_vector = classification(
-        fuse_vector=fuse_vector,
-        embedding_size=4 * hp.bert_embedding_size,
+        inputs=features,
+        embedding_size=8 * hp.bert_embedding_size,
         max_seq_length=hp.max_seq_length,
         bert_embedding_size=hp.bert_embedding_size,
         keep_prob=keep_prob
