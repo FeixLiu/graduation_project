@@ -35,7 +35,7 @@ for i in tqdm(range(marco.total)):
     answer_word_embd.append(get_word_embd(bert.convert2vector(marco.answer_word[i])))
     label.append(marco.label[i])
     answer_index.append(marco.answer_index[i])
-    if i % 30000 == 0 and i != 0:
+    if i % 10000 == 0 and i != 0:
         passage_embd = np.array(passage_embd)
         query_embd = np.array(query_embd)
         answer_embd = np.array(answer_embd)
@@ -46,7 +46,7 @@ for i in tqdm(range(marco.total)):
         np.save('../../data/marco_embd/marco_train_passage_' + str(index) + '.npy', passage_embd)
         np.save('../../data/marco_embd/marco_train_query_' + str(index) + '.npy', query_embd)
         np.save('../../data/marco_embd/marco_train_answer_' + str(index) + '.npy', answer_embd)
-        np.save('../../data/marco_embd/marco_train_answer_' + str(index) + '.npy', answer_word_embd)
+        np.save('../../data/marco_embd/marco_train_answer_word_' + str(index) + '.npy', answer_word_embd)
         np.save('../../data/marco_embd/marco_train_label_' + str(index) + '.npy', label)
         np.save('../../data/marco_embd/marco_train_answer_index_' + str(index) + '.npy', answer_index)
         index += 1
@@ -68,6 +68,6 @@ answer_index = np.array(answer_index)
 np.save('../../data/marco_embd/marco_train_passage_' + str(index) + '.npy', passage_embd)
 np.save('../../data/marco_embd/marco_train_query_' + str(index) + '.npy', query_embd)
 np.save('../../data/marco_embd/marco_train_answer_' + str(index) + '.npy', answer_embd)
-np.save('../../data/marco_embd/marco_train_answer_' + str(index) + '.npy', answer_word_embd)
+np.save('../../data/marco_embd/marco_train_answer_word_' + str(index) + '.npy', answer_word_embd)
 np.save('../../data/marco_embd/marco_train_label_' + str(index) + '.npy', label)
 np.save('../../data/marco_embd/marco_train_answer_index_' + str(index) + '.npy', answer_index)

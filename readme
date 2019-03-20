@@ -21,7 +21,7 @@
 20190317:重构generator network的computational graph。
 20190318:生成网络的输入读入。加入tf.while_loop的API。生成网络测试可运行。
 20190319:添加BiLSTM到分类。思考如何使用tf.data.dataset并行数据读入。
-20190320:预处理marco数据集，将所有的bert embedding加载出来。（无法一次处理完，分批次处理，每一个处理30000个数据）。
+20190320:预处理marco数据集，将所有的bert embedding加载出来。（无法一次处理完，分批次处理，每一个处理30000个数据。不可行，太大了。
 
 接下来：
 生成网络word的embedding有问题。
