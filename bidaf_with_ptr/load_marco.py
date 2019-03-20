@@ -1,6 +1,5 @@
 import nltk
 import json
-from sklearn.utils import shuffle
 import sys
 import numpy as np
 
@@ -69,14 +68,6 @@ class load_marco():
             para_word = self._para_index(para_temp, label_temp)
             answer_index = self._convert2index(answer, para_word)
             self.answer_index.append(np.array(answer_index))
-        self.passage, self.label, self.answer, self.question, self.answer_index, self.answer_word = shuffle(
-            self.passage,
-            self.label,
-            self.answer,
-            self.question,
-            self.answer_index,
-            self.answer_word
-        )
         self.label = np.array(self.label)
         self.answer_index = np.array(self.answer_index)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set from:', self._path, file=sys.stderr)
