@@ -68,13 +68,14 @@ class load_marco():
             self.question.append(query)
             para_word = self._para_index(para_temp, label_temp)
             answer_index = self._convert2index(answer, para_word)
-            self.answer_index.append(answer_index)
-        self.passage, self.label, self.answer, self.question, self.answer_index = shuffle(
+            self.answer_index.append(np.array(answer_index))
+        self.passage, self.label, self.answer, self.question, self.answer_index, self.answer_word = shuffle(
             self.passage,
             self.label,
             self.answer,
             self.question,
-            self.answer_index
+            self.answer_index,
+            self.answer_word
         )
         self.label = np.array(self.label)
         self.answer_index = np.array(self.answer_index)

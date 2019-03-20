@@ -13,6 +13,16 @@ from load_dict import load_dict
 from BiDAF import BiDAF
 from bert import bert_server
 from ptr_generator import PTR_Gnerator
+import numpy as np
+
+
+def convert2word_embd(words):
+    temp = []
+    for i in range(len(words)):
+        temp.append(words[i][1])
+    while len(temp) < hp.max_seq_length:
+        temp.append([0. for _ in range(hp.bert_embedding_size)])
+    return np.array(temp)
 
 
 def cond(LOSS, index):
@@ -169,7 +179,7 @@ with tf.device('/cpu:0'):
                 passage_input = bert.convert2vector(passage_input)
                 query_input = bert.convert2vector([query_marco])
                 answer_input = bert.convert2vector([answer])[0]
-                answer_word_input = bert.convert2vector(answer_word)[0]
+                answer_word_input = convert2word_embd(bert.convert2vector(answer_word))
                 dict = {
                     passage: passage_input,
                     query: query_input,

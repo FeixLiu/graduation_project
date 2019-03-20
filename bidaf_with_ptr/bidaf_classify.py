@@ -49,6 +49,7 @@ with tf.device('/gpu:1'):
         batch_size=hp.max_para,
     ).result
 
+with tf.device('/gpu:0'):
     classification_vector = classification(
         inputs=features,
         embedding_size=8 * hp.bert_embedding_size,
