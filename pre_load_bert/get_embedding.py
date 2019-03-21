@@ -30,7 +30,7 @@ index = 0
 
 for i in tqdm(range(marco.total)):
     passage_embd.append(bert.convert2vector(marco.passage[i]))
-    query_embd.append(bert.convert2vector([marco.question[i] for _ in range(hp.max_para)]))
+    query_embd.append(bert.convert2vector([marco.question[i]]))
     answer_embd.append(bert.convert2vector([marco.answer[i]])[0])
     answer_word_embd.append(get_word_embd(bert.convert2vector(marco.answer_word[i])))
     label.append(marco.label[i])
