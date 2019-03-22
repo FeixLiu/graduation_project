@@ -23,7 +23,7 @@
 20190319:添加BiLSTM到分类。思考如何使用tf.data.dataset并行数据读入。
 20190320:预处理marco数据集，将所有的bert embedding加载出来。（无法一次处理完，分批次处理，每一个处理30000个数据），不可行，太大了。
 20190321:解决tensorflow占用显存太多的问题。解决效率低的问题（把bert和模型放在一张卡上）。重新开始跑分类模型。画模型图。
-20190322:暂时不使用bert。重回glove。
+20190322:暂时不使用bert。重回glove。开始跑分类模型。加载marco的answer与answer words时候需要改进。
 
 接下来：
 生成网络word的embedding有问题。

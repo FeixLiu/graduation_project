@@ -10,15 +10,14 @@ from extract_valid_para import extract_valid
 from load_dict import load_dict
 import numpy as np
 
-vocab = load_dict(hp.word, hp.embedding_size)
 
+vocab = load_dict(hp.word, hp.embedding_size)
 marco_train = load_marco(
     vocab=vocab,
-    path=hp.marco_dev_path,
+    path=hp.marco_train_path,
     max_seq_length=hp.max_seq_length,
     max_para=hp.max_para
 )
-
 '''
 marco_dev = load_marco(
     vocab=vocab,
@@ -139,7 +138,7 @@ with tf.device('/gpu:1'):
         sess.run(embedding_init, feed_dict={embedding_placeholder: vocab.embd})
         counter = 0
         for epoch in range(hp.epoch):
-            for i in range(10):
+            for i in range(marco_train.total):
                 context_id = marco_train.passage_index[i]
                 qas_id = np.tile(marco_train.query_index[i][np.newaxis,:], [hp.max_para, 1])
                 labels = marco_train.label[i]
@@ -150,8 +149,8 @@ with tf.device('/gpu:1'):
                     keep_prob: hp.keep_prob
                 }
                 sess.run(train_op, feed_dict=dict)
-                #if i % hp.loss_acc_iter == 0:
-                writer.add_summary(sess.run(class_merged, feed_dict=dict), counter)
-                counter += 1
+                if i % hp.loss_acc_iter == 0:
+                    writer.add_summary(sess.run(class_merged, feed_dict=dict), counter)
+                    counter += 1
             if epoch % hp.save_model_epoch == 0:
                 saver.save(sess, 'bidaf_classify/model/my_model', global_step=epoch)

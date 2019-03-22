@@ -23,9 +23,9 @@ class PTR_Gnerator():
         """
         function: count the attention vector over the input tensor for the time t
         :param Wh (tensor): the weight tensor for the H
-            shape: [4 * bert_embedding_size, attention_inter_size]
+            shape: [8 * bert_embedding_size, attention_inter_size]
         :param H (tensor): the input fuse vector from the BiDAF
-            shape: [max_seq_length, 4 * bert_embedding_size] # pos_para * max_seq_length for the later version
+            shape: [max_seq_length, 8 * bert_embedding_size] # pos_para * max_seq_length for the later version
         :param Ws (tensor): the weight tensor for the st
             shape: [bert_embedding_size, attention_inter_size]
         :param st (tensor): the last state of the answer embedding at the time t
@@ -41,8 +41,8 @@ class PTR_Gnerator():
         :return at (tensor): the attention vector for the time t
             shape: [max_seq_length, 1]
         """
-        H = tf.reshape(H, shape=[-1, 4 * self._bert_embedding_size])
-        st = tf.reshape(st, shape=[-1, self._bert_embedding_size])
+        H = tf.reshape(H, shape=[-1, 8 * self._bert_embedding_size])
+        st = tf.reshape(st, shape=[-1, 2 * self._bert_embedding_size])
         et = tf.matmul(
             tf.nn.tanh(
                 tf.add(
@@ -75,9 +75,9 @@ class PTR_Gnerator():
         """
         function: get the pointer of the generation
         :param wh (tensor): the weight vector for the h_start_t
-            shape: [4 * bert_embedding_size, 1]
+            shape: [8 * bert_embedding_size, 1]
         :param hstar_t (tensor): the context vector
-            shape: [1, 4 * bert_embedding_size]
+            shape: [1, 8 * bert_embedding_size]
         :param ws (tensor):  the weight vector for the st
             shape: [bert_embedding_size, 1]
         :param st (tensor): the final state of the answer embedding at time t

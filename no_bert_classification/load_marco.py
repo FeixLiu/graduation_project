@@ -60,8 +60,6 @@ class load_marco():
             data = json.load(file)
         self.total = len(data['answers'])
         for i in range(self.total):
-            if i == 10:
-                break
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
