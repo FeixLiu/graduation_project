@@ -94,9 +94,10 @@ with tf.device('/gpu:1'):
                     logits=classification_vector,
                     pos_weight=hp.pos_weight),
                 axis=0),
-            axis=0
+            axis=0,
+            name='class_loss'
         )
-        class_loss_summary = tf.summary.scalar("class_loss", class_loss)
+        class_loss_summary = tf.summary.scalar("class_loss_summary", class_loss)
 
     with tf.name_scope('class_acc'):
         prediction = tf.cast(tf.greater(tf.nn.sigmoid(classification_vector), 0.5), tf.float32)
@@ -112,9 +113,10 @@ with tf.device('/gpu:1'):
                             2),
                         axis=0)),
                 10),
-            axis=0
+            axis=0,
+            name='class_acc'
         )
-        class_acc_summary = tf.summary.scalar('class acc', class_acc)
+        class_acc_summary = tf.summary.scalar('class_acc_summary', class_acc)
 
     class_merged = tf.summary.merge([class_loss_summary, class_acc_summary])
 
@@ -135,24 +137,17 @@ with tf.device('/gpu:1'):
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
 
+
     with tf.Session(config=config) as sess:
         sess.run(init)
-        '''
-        ckpt = tf.train.get_checkpoint_state('./bidaf_classify/model')
-        from tensorflow.python import pywrap_tensorflow
-        reader = pywrap_tensorflow.NewCheckpointReader(ckpt.model_checkpoint_path)
-        sess.run(embedding_init, feed_dict={embedding_placeholder: vocab.embd})
-        var_to_shape_map = reader.get_variable_to_shape_map()
-        for key in var_to_shape_map:
-            print("tensor_name: ", key)
-            '''
-        '''
+        #saver = tf.train.Saver()
+        #saver.restore(sess, tf.train.latest_checkpoint('./bidaf_classify/model/'))
         writer = tf.summary.FileWriter('bidaf_classify/log', sess.graph)
         saver = tf.train.Saver(max_to_keep=hp.max_to_keep)
         sess.run(embedding_init, feed_dict={embedding_placeholder: vocab.embd})
         counter = 0
         for epoch in range(hp.epoch):
-            for i in range(10):
+            for i in range(marco_train.total):
                 context_id = marco_train.passage_index[i]
                 qas_id = np.tile(marco_train.query_index[i][np.newaxis,:], [hp.max_para, 1])
                 labels = marco_train.label[i]
@@ -168,4 +163,3 @@ with tf.device('/gpu:1'):
                     counter += 1
             if epoch % hp.save_model_epoch == 0:
                 saver.save(sess, 'bidaf_classify/model/my_model', global_step=epoch)
-'''
