@@ -121,6 +121,8 @@ with tf.device('/cpu'):
     LOSS = tf.constant(0., shape=[1])
     index = 0
 
+    answer_pre = []
+
     with tf.variable_scope('ptr_generator', reuse=tf.AUTO_REUSE):
         while index < hp.max_seq_length:
             ptrg = PTR_Gnerator(
@@ -155,6 +157,8 @@ with tf.device('/cpu'):
                 b=pvocab_b
             )
             p_overall = tf.concat([pvocab, tf.reshape(at, shape=[-1, hp.max_seq_length])], axis=1)
+            word_pre = tf.argmax(p_overall, axis=1)
+            answer_pre.append(word_pre)
 
             pgen = ptrg.pointer(
                 wh=wh,
@@ -176,6 +180,8 @@ with tf.device('/cpu'):
             )
 
             index += 1
+
+    answer_pre = tf.stack(answer_pre)
 
     LOSS = tf.reduce_sum(LOSS, axis=0)
     loss = LOSS / hp.max_seq_length
