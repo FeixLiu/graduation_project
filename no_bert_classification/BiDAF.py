@@ -19,7 +19,7 @@ class BiDAF():
     self._q2c_attention (tensor): text to query attention
         shape = [paragraph_numbers, max_seq_length, bert_embedding_size]
     """
-    def __init__(self, refc, refq, cLength, qLength, hidden_units):
+    def __init__(self, refc, refq, cLength, qLength, hidden_units, name=None):
         """
         function: initialize the class
         :param refc (tensor): the context tensor
@@ -35,6 +35,7 @@ class BiDAF():
         self._cLength = cLength
         self._qLength = qLength
         self._hidden_units = hidden_units
+        self._name = name
         self.fuse_vector = self._biAttention()
 
     def _biAttention(self):
@@ -55,7 +56,8 @@ class BiDAF():
         :return simMat (tensor): the similarity matrix between text and query
             shape = [paragraph_numbers, max_seq_length, max_seq_length]
         """
-        weights_coMat = tf.Variable(tf.random_normal(dtype=tf.float32, shape=[6 * self._hidden_units, 1]))
+        weights_coMat = tf.Variable(tf.random_normal(dtype=tf.float32, shape=[6 * self._hidden_units, 1]),
+                                    name=self._name+'_weights_coMat')
         cExp = tf.tile(tf.expand_dims(self._refc, 2), [1, 1, self._qLength, 1])
         qExp = tf.tile(tf.expand_dims(self._refq, 1), [1, self._cLength, 1, 1])
         simMat = tf.concat([cExp, qExp, tf.math.multiply(cExp, qExp)], axis=3)

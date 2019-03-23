@@ -10,7 +10,6 @@ from extract_valid_para import extract_valid
 from load_dict import load_dict
 import numpy as np
 
-
 vocab = load_dict(hp.word, hp.embedding_size)
 marco_train = load_marco(
     vocab=vocab,
@@ -18,6 +17,7 @@ marco_train = load_marco(
     max_seq_length=hp.max_seq_length,
     max_para=hp.max_para
 )
+
 '''
 marco_dev = load_marco(
     vocab=vocab,
@@ -29,7 +29,9 @@ marco_dev = load_marco(
 
 with tf.device('/gpu:1'):
     with tf.variable_scope('embedding'):
-        embedding_weight = tf.Variable(tf.constant(0.0, shape=[hp.vocab_size, hp.embedding_size]), trainable=False)
+        embedding_weight = tf.Variable(tf.constant(0.0, shape=[hp.vocab_size, hp.embedding_size]),
+                                       trainable=False,
+                                       name='embedding_weight')
         embedding_placeholder = tf.placeholder(tf.float32, [hp.vocab_size, hp.embedding_size])
         embedding_init = embedding_weight.assign(embedding_placeholder)
         keep_prob = tf.placeholder(tf.float32)
@@ -44,14 +46,16 @@ with tf.device('/gpu:1'):
         context_lstm = BiLSTM(
             inputs=context_embedding,
             hidden_units=hp.embedding_size,
-            dropout=keep_prob
+            dropout=hp.keep_prob,
+            name='context_lstm'
         ).result
 
     with tf.variable_scope('qas_lstm', reuse=tf.AUTO_REUSE):
         qas_lstm = BiLSTM(
             inputs=qas_embedding,
             hidden_units=hp.embedding_size,
-            dropout=keep_prob
+            dropout=hp.keep_prob,
+            name='qas_lstm'
         ).result
 
     with tf.variable_scope('bidaf', reuse=tf.AUTO_REUSE):
@@ -60,14 +64,16 @@ with tf.device('/gpu:1'):
             refq=qas_lstm,
             cLength=hp.max_seq_length,
             qLength=hp.max_seq_length,
-            hidden_units=hp.embedding_size
+            hidden_units=hp.embedding_size,
+            name='bidaf'
         ).fuse_vector
 
     with tf.variable_scope('features', reuse=tf.AUTO_REUSE):
         features = BiLSTM(
             inputs=fuse_vector,
             hidden_units=8 * hp.embedding_size,
-            dropout=keep_prob
+            dropout=hp.keep_prob,
+            name='features'
         ).result
 
     with tf.variable_scope('classification', reuse=tf.AUTO_REUSE):
@@ -76,7 +82,8 @@ with tf.device('/gpu:1'):
             embedding_size=16 * hp.embedding_size,
             max_seq_length=hp.max_seq_length,
             bert_embedding_size=hp.embedding_size,
-            keep_prob=keep_prob
+            keep_prob=keep_prob,
+            name='classification'
         ).class_vector
 
     with tf.name_scope('class_loss'):
@@ -130,12 +137,22 @@ with tf.device('/gpu:1'):
 
     with tf.Session(config=config) as sess:
         sess.run(init)
+        '''
+        ckpt = tf.train.get_checkpoint_state('./bidaf_classify/model')
+        from tensorflow.python import pywrap_tensorflow
+        reader = pywrap_tensorflow.NewCheckpointReader(ckpt.model_checkpoint_path)
+        sess.run(embedding_init, feed_dict={embedding_placeholder: vocab.embd})
+        var_to_shape_map = reader.get_variable_to_shape_map()
+        for key in var_to_shape_map:
+            print("tensor_name: ", key)
+            '''
+        '''
         writer = tf.summary.FileWriter('bidaf_classify/log', sess.graph)
         saver = tf.train.Saver(max_to_keep=hp.max_to_keep)
         sess.run(embedding_init, feed_dict={embedding_placeholder: vocab.embd})
         counter = 0
         for epoch in range(hp.epoch):
-            for i in range(marco_train.total):
+            for i in range(10):
                 context_id = marco_train.passage_index[i]
                 qas_id = np.tile(marco_train.query_index[i][np.newaxis,:], [hp.max_para, 1])
                 labels = marco_train.label[i]
@@ -151,3 +168,4 @@ with tf.device('/gpu:1'):
                     counter += 1
             if epoch % hp.save_model_epoch == 0:
                 saver.save(sess, 'bidaf_classify/model/my_model', global_step=epoch)
+'''
