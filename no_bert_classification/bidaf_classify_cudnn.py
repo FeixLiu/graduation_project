@@ -159,7 +159,7 @@ with tf.device('/gpu:1'):
                 }
                 sess.run(train_op, feed_dict=dict)
                 if i % hp.loss_acc_iter == 0:
-                    writer.add_summary(sess.run(class_merged, feed_dict=dict), counter)
-                    counter += 1
-            if epoch % hp.save_model_epoch == 0:
-                saver.save(sess, 'bidaf_classify/model/my_model', global_step=epoch)
+                    if sess.run(class_loss, feed_dict=dict) != 0:
+                        writer.add_summary(sess.run(class_merged, feed_dict=dict), counter)
+                        counter += 1
+            saver.save(sess, 'bidaf_classify/model/my_model', global_step=epoch)

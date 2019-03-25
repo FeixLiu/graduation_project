@@ -25,9 +25,11 @@
 20190321:解决tensorflow占用显存太多的问题。解决效率低的问题（把bert和模型放在一张卡上）。重新开始跑分类模型。画模型图。
 20190322:暂时不使用bert。重回glove。开始跑分类模型。加载marco的answer与answer words时候需要改进。
 20190323:研究cudnn的使用方法。将bilstm换成cudnn_lstm来提升效率。
+20190324:修改生成网络的代码。生成网络的loss使用stack代替。
+20190325:修改生成网络的embedding获取。测试生成网络个部分的工作效果。我驾驭不了coverage！！！！！！！！！！太难了！！！！！！！！
 
 接下来：
-生成网络的loss使用stack代替。
+查看各placeholder的准备输入是否正确。检测loss与answer pre是否正确。
 生成网络的loss，acc可视化。
 优化分类模型。
 实现transformer

@@ -12,7 +12,7 @@ class classification():
     self.class_vector (tensor): the classification vector
         shape: [paragraph_numbers, 1]
     """
-    def __init__(self, inputs, embedding_size, max_seq_length, bert_embedding_size, keep_prob, name=None):
+    def __init__(self, inputs, embedding_size, max_seq_length, bert_embedding_size, keep_prob, name):
         """
         function: initialize the class
         :param fuse_vector (tensor): the output of the BiDAF

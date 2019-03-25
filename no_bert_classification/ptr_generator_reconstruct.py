@@ -7,7 +7,11 @@ class PTR_Gnerator():
     self._max_seq_length (int): the max sequence length
     self._ptr_conv_beta (float): the beta weight when add two losses
     """
-    def __init__(self, bert_embedding_size, max_seq_length, ptr_conv_beta):
+    def __init__(self, bert_embedding_size, max_seq_length, ptr_conv_beta,
+                 Wh, H, Ws, wc, batten, v,
+                 wh, ws, wx, bptr,
+                 w, b,
+                 vocab_size):
         """
         function: initialize the class
         :param bert_embedding_size (int): the bert embedding size
@@ -17,9 +21,22 @@ class PTR_Gnerator():
         self._bert_embedding_size = bert_embedding_size
         self._max_seq_length = max_seq_length
         self._ptr_conv_beta = ptr_conv_beta
+        self._Wh = Wh
+        self._H = H
+        self._Ws = Ws
+        self._wc = wc
+        self._batten = batten
+        self._v = v
+        self._wh = wh
+        self._ws = ws
+        self._wx = wx
+        self._bptr = bptr
+        self._w = w
+        self._b = b
+        self._vocab_size = vocab_size
 
 
-    def attention(self, Wh, H, Ws, st, wc, coverage, batten, v):
+    def attention(self, st, coverage):
         """
         function: count the attention vector over the input tensor for the time t
         :param Wh (tensor): the weight tensor for the H
@@ -41,7 +58,7 @@ class PTR_Gnerator():
         :return at (tensor): the attention vector for the time t
             shape: [max_seq_length, 1]
         """
-        H = tf.reshape(H, shape=[-1, 8 * self._bert_embedding_size])
+        H = tf.reshape(self._H, shape=[-1, 8 * self._bert_embedding_size])
         st = tf.reshape(st, shape=[-1, 2 * self._bert_embedding_size])
         et = tf.matmul(
             tf.nn.tanh(
@@ -50,28 +67,28 @@ class PTR_Gnerator():
                         tf.add(
                             tf.matmul(
                                 H,
-                                Wh
+                                self._Wh
                             ),
                             tf.matmul(
                                 st,
-                                Ws
+                                self._Ws
                             )
                         ),
                         tf.matmul(
                             coverage,
-                            wc
+                            self._wc
                         )
                     ),
-                    batten
+                    self._batten
                 )
             ),
-            v
+            self._v
         )
         et = tf.reshape(et, [self._max_seq_length, 1])
-        at = tf.nn.softmax(et, axis=0)
+        at = tf.nn.softmax(et, axis=1)
         return at
 
-    def pointer(self, wh, hstar_t, ws, st, wx, xt, bptr):
+    def pointer(self, hstar_t, st, xt):
         """
         function: get the pointer of the generation
         :param wh (tensor): the weight vector for the h_start_t
@@ -97,24 +114,24 @@ class PTR_Gnerator():
                     tf.add(
                         tf.matmul(
                             hstar_t,
-                            wh
+                            self._wh
                         ),
                         tf.matmul(
                             st,
-                            ws
+                            self._ws
                         )
                     ),
                     tf.matmul(
                         xt,
-                        wx
+                        self._wx
                     )
                 ),
-                bptr
+                self._bptr
             )
         )
         return tf.reshape(pgen, shape=[1])
 
-    def pvocab(self, st, hstar_t, w, b):
+    def pvocab(self, st, hstar_t):
         """
         function: get the probability over all words from the context vector and the answer embedding
         :param st (tensor): the last state of the answer embedding at time t
@@ -134,15 +151,15 @@ class PTR_Gnerator():
                 tf.add(
                     tf.matmul(
                         pvocab_pre,
-                        w
+                        self._w
                     ),
-                    b
+                    self._b
                 )
             )
         )
         return pvocab
 
-    def loss(self, p_overall, words_indice, vocab_size, pgen, at, coverage_vector_t):
+    def loss(self, p_overall, words_indice, pgen, at, coverage_vector_t):
         """
         function: calculate the loss for the time t
         :param p_overall (tensor): the all probability over both vocabulary and the paragraph
@@ -165,7 +182,7 @@ class PTR_Gnerator():
                 words_indice,
                 [[0, 1]]
             ),
-            vocab_size
+            self._vocab_size
         )
         no_pgen = tf.cast(no_pgen, tf.float32)
         yes_pgen = tf.less_equal(
@@ -173,7 +190,7 @@ class PTR_Gnerator():
                 words_indice,
                 [[0, 1]]
             ),
-            vocab_size
+            self._vocab_size
         )
         yes_pgen = tf.cast(yes_pgen, tf.float32)
         p_w_t = tf.math.add(
