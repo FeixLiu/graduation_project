@@ -56,11 +56,12 @@ class load_marco():
         self.passage_index = []
         self.query_index = []
         self.answer_index = []
+        self.answer_len = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
         for i in range(self.total):
-            if i == 10:
+            if i == 5:
                 break
             i = str(i)
             query = data['query'][i]
@@ -80,8 +81,9 @@ class load_marco():
             self.passage_index.append(para_index_temp)
             self.query_index.append(self._get_index(query))
             para_word = self._para_index(para_temp, label_temp)
-            answer_index = self._convert2index(answer, para_word)
+            answer_index, answer_len = self._convert2index(answer, para_word)
             self.answer_index.append(np.array(answer_index))
+            self.answer_len.append(np.array([answer_len]))
         self.label = np.array(self.label)
         self.answer_index = np.array(self.answer_index)
         self.query_index = np.array(self.query_index)
@@ -150,6 +152,7 @@ class load_marco():
         :return answer_index (list): the word index of the input answer
         """
         answer_index = []
+        id = 0
         for word in answer.split(' '):
             try:
                 index = self._vocab.vocab2index[word]
@@ -158,10 +161,13 @@ class load_marco():
                     index = para_word['word2index'][word]
                 except KeyError:
                     index = 0
-            answer_index.append([0, index])
-        while len(answer_index) < self._max_seq_length:
-            answer_index.append([0, 0])
-        return answer_index
+            answer_index.append([id, index])
+            id += 1
+        temp = id
+        while temp < self._max_seq_length:
+            answer_index.append([temp, 0.])
+            temp += 1
+        return answer_index, id
 
     def _para_index(self, para, label):
         """
