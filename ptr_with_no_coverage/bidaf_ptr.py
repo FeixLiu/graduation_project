@@ -105,7 +105,7 @@ with tf.device('/gpu:0'):
         loss = ptrg.loss
         class_loss_summary = tf.summary.scalar("loss_summary", loss)
 
-    train_op = tf.train.GradientDescentOptimizer(hp.learning_rate).minimize(loss)
+    train_op = tf.train.GradientDescentOptimizer(learning_rate=hp.learning_rate).minimize(loss)
 
     init = tf.global_variables_initializer()
 
@@ -118,8 +118,8 @@ with tf.device('/gpu:0'):
         writer = tf.summary.FileWriter('bidaf_ptr/log', sess.graph)
         saver = tf.train.Saver(max_to_keep=hp.max_to_keep)
         counter = 0
-        for epoch in range(50000):
-            for i in range(5):
+        for epoch in range(500000):
+            for i in range(1):
                 counter += 1
                 passage_index = marco_dev.passage_index[i]
                 label = marco_dev.label[i]
@@ -148,5 +148,6 @@ with tf.device('/gpu:0'):
                     answer_len: answer_length
                 }
                 sess.run(train_op, feed_dict=dict)
-                writer.add_summary(sess.run(class_loss_summary, feed_dict=dict), counter)
+                #writer.add_summary(sess.run(class_loss_summary, feed_dict=dict), counter)
+                print(sess.run(ptrg.prediction, feed_dict=dict))
 

@@ -4,8 +4,7 @@ import numpy as np
 
 class PTR_Gnerator():
     def __init__(self, fuse_vector, decoder_state, vocab_size, attention_inter_size, fuse_vector_embedding_size,
-                 context_seq_length, ans_seq_length, answer_length, decoder_embedding_size, word_embd,
-                 word_embd_size, ans_ids, name):
+                 context_seq_length, ans_seq_length, decoder_embedding_size, ans_ids, name):
         self._fuse_vector = fuse_vector
         self._decoder_state = decoder_state
         self._vocab_size = vocab_size
@@ -13,10 +12,7 @@ class PTR_Gnerator():
         self._context_seq_length = context_seq_length
         self._ans_seq_length = ans_seq_length
         self._fuse_vector_embedding_size = fuse_vector_embedding_size
-        self._answer_length = answer_length
         self._decoder_embedding_size = decoder_embedding_size
-        self._word_embd = word_embd
-        self._word_embd_size = word_embd_size
         self._ans_ids = ans_ids
         self._ans_index = tf.expand_dims(ans_ids[:, 1], axis=1)
         self._name = name
@@ -78,14 +74,10 @@ class PTR_Gnerator():
         ws = tf.Variable(tf.random_normal(shape=[self._decoder_embedding_size, 1]),
                          dtype=tf.float32,
                          name=self._name + '_ws_pgen')
-        wx = tf.Variable(tf.random_normal(shape=[self._word_embd_size, 1]),
-                         dtype=tf.float32,
-                         name=self._name + '_wx_pgen')
         bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]))
         whh = tf.matmul(self._h_star, wh)
         wss = tf.matmul(self._decoder_state, ws)
-        wxx = tf.matmul(self._word_embd, wx)
-        pgen = tf.add(tf.add(tf.add(whh, wss), wxx), bptr)
+        pgen = tf.add(tf.add(whh, wss), bptr)
         pgen = tf.nn.sigmoid(pgen)
         return pgen
 
@@ -116,7 +108,6 @@ class PTR_Gnerator():
             )
         )
         p_w_t = tf.reduce_sum(p_w_t, axis=1)
-        #p_w_t = tf.slice(p_w_t, tf.constant(0, shape=[1], dtype=tf.int32), self._answer_length)
         loss_prob_t = tf.reduce_sum(0. - tf.math.log(tf.clip_by_value(p_w_t, 1e-8, 1.0)), axis=0)
         return loss_prob_t
 

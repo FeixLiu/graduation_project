@@ -5,7 +5,7 @@ class Hyperparameters():
     word = '../../data/word_embd/word_embd_500'
     max_para = 10
     max_seq_length = 64
-    embedding_size = 300
+    embedding_size = 768
     pos_weight = 0.1
     ptr_conv_beta = 0.5
     attention_inter_size = 256
