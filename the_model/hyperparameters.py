@@ -2,7 +2,7 @@ class Hyperparameters():
     marco_train_path = '../../data/marco/train_v2.1.json'
     marco_eval_path = '../../data/marco/eval_v2.1_public.json'
     marco_dev_path = '../../data/marco/dev_v2.1.json'
-    word = '../../data/word_embd/word_embd_500'
+    word = '../../data/word/my_word_dict_1000'
     max_para = 10
     max_seq_length = 64
     embedding_size = 768
@@ -12,7 +12,7 @@ class Hyperparameters():
     learning_rate = 0.0001
     pos_para = 2
     epoch = 400
-    vocab_size = 38579
+    vocab_size = 25699
     loss_acc_iter = 400
     max_to_keep = 10
     test_iter = 20

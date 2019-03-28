@@ -11,7 +11,8 @@ from extract_valid_para import extract_valid
 from load_dict import load_dict
 from ptr_generator import PTR_Gnerator
 
-vocab = load_dict(hp.word, hp.embedding_size)
+vocab = load_dict(hp.word)
+print(len(vocab.index2vocab))
 marco_train = load_marco(
     vocab=vocab,
     path=hp.marco_train_path,
@@ -116,8 +117,8 @@ with tf.device('/gpu:1'):
         writer = tf.summary.FileWriter('bidaf_class_ptr/log', sess.graph)
         saver = tf.train.Saver(max_to_keep=hp.max_to_keep)
         counter = 0
-        for epoch in range(5000000):
-            for i in range(1):
+        for epoch in range(hp.epoch):
+            for i in range(marco_train.total):
                 counter += 1
                 passage = marco_train.passage[i]
                 label = marco_train.label[i]
