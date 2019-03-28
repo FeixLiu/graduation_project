@@ -17,3 +17,4 @@ class Hyperparameters():
     max_to_keep = 10
     test_iter = 20
     keep_prob = 0.5
+    vocab_inter = 4096

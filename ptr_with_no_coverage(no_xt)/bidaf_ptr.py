@@ -11,13 +11,10 @@ from load_dict import load_dict
 from BiDAF import BiDAF
 from ptr_generator_no_coverage import PTR_Gnerator
 from bert import bert_server
-from BiLSTM_cudnn import BiLSTM
 import numpy as np
 
 
-vocab = load_dict(path=hp.word, embedding_size=hp.embedding_size)
 marco_dev = load_marco(
-    vocab=vocab,
     path=hp.marco_train_path,
     max_seq_length=hp.max_seq_length,
     max_para=hp.max_para
@@ -57,7 +54,7 @@ with tf.device('/gpu:0'):
         ptrg = PTR_Gnerator(
             fuse_vector=fuse_vector,
             decoder_state=answer_input,
-            vocab_size=hp.vocab_size,
+            vocab_size=10,
             attention_inter_size=hp.attention_inter_size,
             fuse_vector_embedding_size=4 * hp.embedding_size,
             context_seq_length=hp.max_seq_length,
@@ -112,7 +109,7 @@ with tf.device('/gpu:0'):
                     answer_input: answer,
                     answer_index: answer_indice,
                 }
-                #sess.run(train_op, feed_dict=dict)
+                sess.run(train_op, feed_dict=dict)
                 #writer.add_summary(sess.run(class_loss_summary, feed_dict=dict), counter)
-                print(sess.run(ptrg._pgen, feed_dict=dict))
+                print(sess.run(ptrg._pvocab, feed_dict=dict))
 

@@ -19,8 +19,8 @@ class PTR_Gnerator():
         self._attention = self._get_attention()
         self._h_star = self._get_h_star()
         self._pvocab = self._get_pvocab()
-        self._p_overall = tf.concat([self._pvocab, tf.transpose(self._attention)], axis=1)
-        self._pgen = self._get_pgen()
+        #self._p_overall = tf.concat([self._pvocab, tf.transpose(self._attention)], axis=1)
+        #self._pgen = self._get_pgen()
         self.prediction = self._get_pre()
         self.loss = self._get_loss()
 
@@ -82,38 +82,15 @@ class PTR_Gnerator():
         return pgen
 
     def _get_loss(self):
-        answer_prob = tf.expand_dims(tf.gather_nd(self._p_overall, self._ans_ids), axis=1)
-        vocab_dim = tf.Variable(tf.constant(self._vocab_size, shape=[self._ans_seq_length, 1]),
-                                dtype=tf.int32,
-                                trainable=False,
-                                name=self._name + '_vocab_dim')
-        no_pgen = tf.greater(self._ans_index, vocab_dim)
-        no_pgen = tf.cast(no_pgen, tf.float32)
-        yes_pgen = tf.less_equal(self._ans_index, vocab_dim)
-        yes_pgen = tf.cast(yes_pgen, tf.float32)
-        p_w_t = tf.math.add(
-            tf.math.multiply(
-                tf.math.multiply(
-                    answer_prob,
-                    no_pgen
-                ),
-                (1. - self._pgen)
-            ),
-            tf.math.multiply(
-                tf.math.multiply(
-                    answer_prob,
-                    yes_pgen
-                ),
-                self._pgen
-            )
-        )
-        p_w_t = tf.reduce_sum(p_w_t, axis=1)
-        loss_prob_t = tf.reduce_sum(0. - tf.math.log(tf.clip_by_value(p_w_t, 1e-8, 1.0)), axis=0)
+        answer_prob = tf.expand_dims(tf.gather_nd(self._pvocab, self._ans_ids), axis=1)
+        p_w_t = tf.reduce_sum(answer_prob, axis=1)
+        loss_prob_t = 0. - tf.math.log(tf.clip_by_value(p_w_t, 1e-8, 1.0))
+        #loss_prob_t = tf.reduce_sum(0. - tf.math.log(tf.clip_by_value(p_w_t, 1e-8, 1.0)), axis=0)
         return loss_prob_t
 
     def _get_pre(self):
-        pgenpv = tf.math.multiply(self._pgen, self._pvocab)
-        pgenat = tf.math.multiply(tf.subtract(1., - self._pgen), self._attention)
-        pgenpoverall = tf.concat([pgenpv, tf.transpose(pgenat)], axis=1)
-        prediction = tf.argmax(pgenpoverall, axis=1)
+        #pgenpv = tf.math.multiply(self._pgen, self._pvocab)
+        #pgenat = tf.math.multiply(tf.subtract(1., - self._pgen), self._attention)
+        #pgenpoverall = tf.concat([pgenpv, tf.transpose(pgenat)], axis=1)
+        prediction = tf.argmax(self._pvocab, axis=1)
         return prediction

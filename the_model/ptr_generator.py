@@ -4,7 +4,7 @@ import numpy as np
 
 class PTR_Gnerator():
     def __init__(self, fuse_vector, decoder_state, vocab_size, attention_inter_size, fuse_vector_embedding_size,
-                 context_seq_length, ans_seq_length, decoder_embedding_size, ans_ids, name):
+                 context_seq_length, ans_seq_length, decoder_embedding_size, ans_ids, vocab_inter, name):
         self._fuse_vector = fuse_vector
         self._decoder_state = decoder_state
         self._vocab_size = vocab_size
@@ -15,6 +15,7 @@ class PTR_Gnerator():
         self._decoder_embedding_size = decoder_embedding_size
         self._ans_ids = ans_ids
         self._ans_index = tf.expand_dims(ans_ids[:, 1], axis=1)
+        self._vocab_inter = vocab_inter
         self._name = name
         self._attention = self._get_attention()
         self._h_star = self._get_h_star()
@@ -56,14 +57,22 @@ class PTR_Gnerator():
 
     def _get_pvocab(self):
         p_pre = tf.concat([self._h_star, self._decoder_state], axis=1)
-        b = tf.Variable(tf.random_normal(shape=[1, self._vocab_size]),
+        b1 = tf.Variable(tf.random_normal(shape=[1, self._vocab_inter]),
                         dtype=tf.float32,
-                        name=self._name + '_B_pvocab')
-        V = tf.Variable(tf.random_normal(shape=[self._fuse_vector_embedding_size + self._decoder_embedding_size,
-                                                self._vocab_size]),
+                        name=self._name + '_B1_pvocab')
+        V1 = tf.Variable(tf.random_normal(shape=[self._fuse_vector_embedding_size + self._decoder_embedding_size,
+                                                self._vocab_inter]),
                         dtype=tf.float32,
-                        name=self._name + '_V_pvocab')
-        p_vocab = tf.nn.tanh(tf.add(tf.matmul(p_pre, V), b))
+                        name=self._name + '_V1_pvocab')
+        b2 = tf.Variable(tf.random_normal(shape=[1, self._vocab_size]),
+                        dtype=tf.float32,
+                        name=self._name + '_B2_pvocab')
+        V2 = tf.Variable(tf.random_normal(shape=[self._vocab_inter, self._vocab_size]),
+                        dtype=tf.float32,
+                        name=self._name + '_V2_pvocab')
+        p_vocab = tf.add(tf.matmul(p_pre, V1), b1)
+        p_vocab = tf.add(tf.matmul(p_vocab, V2), b2)
+        p_vocab = tf.nn.tanh(p_vocab)
         p_vocab = tf.nn.softmax(p_vocab, axis=1)
         return p_vocab
 
@@ -113,7 +122,7 @@ class PTR_Gnerator():
 
     def _get_pre(self):
         pgenpv = tf.math.multiply(self._pgen, self._pvocab)
-        pgenat = tf.math.multiply(tf.subtract(1., - self._pgen), self._attention)
-        pgenpoverall = tf.concat([pgenpv, tf.transpose(pgenat)], axis=1)
+        pgenat = tf.math.multiply(tf.subtract(1., - self._pgen), tf.transpose(self._attention))
+        pgenpoverall = tf.concat([pgenpv, pgenat], axis=1)
         prediction = tf.argmax(pgenpoverall, axis=1)
         return prediction

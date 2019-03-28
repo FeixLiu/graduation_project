@@ -30,7 +30,7 @@ class load_marco():
     self.total (int): how many query-answer-answer_index-label-passage pairs the dataset has
         equal with len(query), len(answer), len(answer_index), len(label), len(passage)
     """
-    def __init__(self, path, vocab, max_seq_length, max_para):
+    def __init__(self, path, max_seq_length, max_para):
         """
         function: initialize the class
         :param path (string): the path of the marco dataset
@@ -39,7 +39,6 @@ class load_marco():
         :param max_para (int): max paragraphs each passage has
         """
         self._path = path
-        self._vocab = vocab
         self._max_seq_length = max_seq_length
         self._max_para = max_para
         self._load_marco()
@@ -51,12 +50,8 @@ class load_marco():
         self.passage = []
         self.label = []
         self.answer = []
-        #self.answer_word = []
-        self.question = []
-        self.passage_index = []
-        self.query_index = []
         self.answer_index = []
-        self.answer_len = []
+        self.question = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
@@ -71,55 +66,12 @@ class load_marco():
             self.passage.append(para_temp)
             self.label.append(label_temp)
             self.answer.append(answer)
-            #self.answer_word.append(self._convert2words(answer))
             self.question.append(query)
-            para_index_temp = []
-            for i in para_temp:
-                para_index = self._get_index(i)
-                para_index_temp.append(para_index)
-            para_index_temp = np.array(para_index_temp)
-            self.passage_index.append(para_index_temp)
-            self.query_index.append(self._get_index(query))
             para_word = self._para_index(para_temp, label_temp)
             answer_index, answer_len = self._convert2index(answer, para_word)
             self.answer_index.append(np.array(answer_index))
-            self.answer_len.append(np.array([answer_len]))
         self.label = np.array(self.label)
-        self.answer_index = np.array(self.answer_index)
-        self.query_index = np.array(self.query_index)
-        self.passage_index = np.array(self.passage_index)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set from:', self._path, file=sys.stderr)
-
-    def _convert2words(self, answer):
-        """
-        function: convert the answer to the words level saving
-        :param answer (string): the origin answer
-        :return answer_word (list): the words level saving
-        """
-        answer_word = []
-        for word in answer.split(' '):
-            answer_word.append(word)
-        return answer_word
-
-    def _get_index(self, inputs):
-        """
-        function: convert the inputs to its index representation
-        :param inputs (string): input sentence
-        :return temp(list): the index representation of inputs
-        """
-        words = nltk.word_tokenize(inputs)
-        temp = []
-        for word in words:
-            try:
-                index = self._vocab.vocab2index[word]
-            except KeyError:
-                index = 0
-            temp.append(index)
-            if len(temp) == self._max_seq_length:
-                break
-        while len(temp) < self._max_seq_length:
-            temp.append(0)
-        return temp
 
     def _convert_para(self, passage):
         """
@@ -155,17 +107,14 @@ class load_marco():
         id = 0
         for word in answer.split(' '):
             try:
-                index = self._vocab.vocab2index[word]
+                index = para_word['word2index'][word]
             except KeyError:
-                try:
-                    index = para_word['word2index'][word]
-                except KeyError:
-                    index = 0
+                index = int(id % 10)
             answer_index.append([id, index])
             id += 1
         temp = id
         while temp < self._max_seq_length:
-            answer_index.append([temp, 0.])
+            answer_index.append([temp, 0])
             temp += 1
         return answer_index, id
 

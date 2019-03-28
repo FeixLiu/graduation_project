@@ -9,7 +9,7 @@ import tensorflow as tf
 from load_marco_simplify import load_marco
 from load_dict import load_dict
 from BiDAF import BiDAF
-from ptr_generator_no_coverage import PTR_Gnerator
+from ptr_generator import PTR_Gnerator
 from BiLSTM_cudnn import BiLSTM
 import numpy as np
 
