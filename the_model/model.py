@@ -117,7 +117,7 @@ with tf.device('/gpu:1'):
         saver = tf.train.Saver(max_to_keep=hp.max_to_keep)
         counter = 0
         for epoch in range(hp.epoch):
-            for i in range(marco_train.total):
+            for i in range(1):
                 counter += 1
                 passage = marco_train.passage[i]
                 label = marco_train.label[i]
