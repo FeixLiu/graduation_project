@@ -4,7 +4,7 @@ import numpy as np
 
 class PTR_Gnerator():
     def __init__(self, fuse_vector, decoder_state, vocab_size, attention_inter_size, fuse_vector_embedding_size,
-                 context_seq_length, ans_seq_length, decoder_embedding_size, ans_ids, vocab_inter, name):
+                 context_seq_length, ans_seq_length, decoder_embedding_size, ans_ids, epsilon, name):
         self._fuse_vector = fuse_vector
         self._decoder_state = decoder_state
         self._vocab_size = vocab_size
@@ -15,7 +15,7 @@ class PTR_Gnerator():
         self._decoder_embedding_size = decoder_embedding_size
         self._ans_ids = ans_ids
         self._ans_index = tf.expand_dims(ans_ids[:, 1], axis=1)
-        self._vocab_inter = vocab_inter
+        self._epsilon = epsilon
         self._name = name
         self._attention = self._get_attention()
         self._h_star = self._get_h_star()
@@ -26,16 +26,19 @@ class PTR_Gnerator():
         self.loss = self._get_loss()
 
     def _get_attention(self):
-        Wh = tf.Variable(tf.random_normal(shape=[self._fuse_vector_embedding_size, self._attention_inter_size]),
+        Wh = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                            shape=[self._fuse_vector_embedding_size, self._attention_inter_size]),
                          dtype=tf.float32,
                          name=self._name + '_Wh_attention')
-        Ws = tf.Variable(tf.random_normal(shape=[self._decoder_embedding_size, self._attention_inter_size]),
+        Ws = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                            shape=[self._decoder_embedding_size, self._attention_inter_size]),
                          dtype=tf.float32,
                          name=self._name + '_Ws_attention')
         batten = tf.Variable(tf.constant(0.1, shape=[1, self._attention_inter_size]),
                              dtype=tf.float32,
                          name=self._name + '_batten_attention')
-        v = tf.Variable(tf.random_normal(shape=[self._attention_inter_size, 1]),
+        v = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                            shape=[self._attention_inter_size, 1]),
                         dtype=tf.float32,
                          name=self._name + '_v_attention')
         whh = tf.matmul(self._fuse_vector, Wh)
@@ -46,6 +49,10 @@ class PTR_Gnerator():
         S = tf.reshape(S, shape=[-1, self._attention_inter_size])
         E = tf.matmul(tf.add(tf.add(H, S), batten), v)
         E = tf.reshape(E, shape=[self._context_seq_length, self._ans_seq_length])
+        e_mean, e_var = tf.nn.moments(E, axes=[0])
+        scale = tf.Variable(tf.ones([self._ans_seq_length]))
+        shift = tf.Variable(tf.zeros([self._ans_seq_length]))
+        E = tf.nn.batch_normalization(E, e_mean, e_var, shift, scale, self._epsilon)
         at = tf.nn.softmax(E, axis=0)
         return at
 
@@ -57,30 +64,31 @@ class PTR_Gnerator():
 
     def _get_pvocab(self):
         p_pre = tf.concat([self._h_star, self._decoder_state], axis=1)
-        b1 = tf.Variable(tf.random_normal(shape=[1, self._vocab_inter]),
+        b = tf.Variable(tf.constant(0.1, shape=[1, self._vocab_size]),
                         dtype=tf.float32,
-                        name=self._name + '_B1_pvocab')
-        V1 = tf.Variable(tf.random_normal(shape=[self._fuse_vector_embedding_size + self._decoder_embedding_size,
-                                                self._vocab_inter]),
+                        name=self._name + '_B_pvocab')
+        V = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                            shape=[self._fuse_vector_embedding_size + self._decoder_embedding_size,
+                                                self._vocab_size]),
                         dtype=tf.float32,
-                        name=self._name + '_V1_pvocab')
-        b2 = tf.Variable(tf.random_normal(shape=[1, self._vocab_size]),
-                        dtype=tf.float32,
-                        name=self._name + '_B2_pvocab')
-        V2 = tf.Variable(tf.random_normal(shape=[self._vocab_inter, self._vocab_size]),
-                        dtype=tf.float32,
-                        name=self._name + '_V2_pvocab')
-        p_vocab = tf.add(tf.matmul(p_pre, V1), b1)
-        p_vocab = tf.add(tf.matmul(p_vocab, V2), b2)
-        p_vocab = tf.nn.tanh(p_vocab)
+                        name=self._name + '_V_pvocab')
+        p_vocab = tf.add(tf.matmul(p_pre, V), b)
+        p_mean, p_var = tf.nn.moments(p_vocab, axes=[1])
+        p_mean = tf.expand_dims(p_mean, axis=1)
+        p_var = tf.expand_dims(p_var, axis=1)
+        scale = tf.Variable(tf.ones([self._ans_seq_length, 1]))
+        shift = tf.Variable(tf.zeros([self._ans_seq_length, 1]))
+        p_vocab = tf.nn.batch_normalization(p_vocab, p_mean, p_var, shift, scale, self._epsilon)
         p_vocab = tf.nn.softmax(p_vocab, axis=1)
         return p_vocab
 
     def _get_pgen(self):
-        wh = tf.Variable(tf.random_normal(shape=[self._fuse_vector_embedding_size, 1]),
+        wh = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                            shape=[self._fuse_vector_embedding_size, 1]),
                          dtype=tf.float32,
                          name=self._name + '_wh_pgen')
-        ws = tf.Variable(tf.random_normal(shape=[self._decoder_embedding_size, 1]),
+        ws = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                            shape=[self._decoder_embedding_size, 1]),
                          dtype=tf.float32,
                          name=self._name + '_ws_pgen')
         bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]))

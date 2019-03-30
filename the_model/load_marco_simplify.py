@@ -57,6 +57,8 @@ class load_marco():
             data = json.load(file)
         self.total = len(data['answers'])
         for i in range(self.total):
+            if i == 1:
+                break
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
@@ -116,7 +118,7 @@ class load_marco():
             id += 1
         temp = id
         while temp < self._max_seq_length:
-            answer_index.append([temp, 0.])
+            answer_index.append([temp, 0])
             temp += 1
         return answer_index, id
 

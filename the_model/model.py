@@ -12,7 +12,6 @@ from load_dict import load_dict
 from ptr_generator import PTR_Gnerator
 
 vocab = load_dict(hp.word)
-print(len(vocab.index2vocab))
 marco_train = load_marco(
     vocab=vocab,
     path=hp.marco_train_path,
@@ -91,7 +90,7 @@ with tf.device('/gpu:1'):
             ans_seq_length=hp.max_seq_length,
             decoder_embedding_size=hp.embedding_size,
             ans_ids=answer_index,
-            vocab_inter=hp.vocab_inter,
+            epsilon=hp.epsilon,
             name='ptr_generator'
         )
 
@@ -138,5 +137,6 @@ with tf.device('/gpu:1'):
                     answer_index: answer_indice
                 }
                 sess.run(train_op, feed_dict=dict)
-                writer.add_summary(sess.run(loss_merged, feed_dict=dict), counter)
-                break
+                if i % hp.loss_acc_iter == 0:
+                    writer.add_summary(sess.run(loss_merged, feed_dict=dict), counter)
+            saver.save(sess, 'bidaf_class_ptr/model/my_model', global_step=epoch)
