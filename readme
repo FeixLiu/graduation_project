@@ -30,6 +30,10 @@
 20190326:完成没有coverage的生成网络开发。
 20190327:把分类模型以及生成模型联合在一起。
 20190328:调整昨天和在一起的模型。生成网络有问题！！！！！！！不知道问题在哪里。
+20190329:找到问题所在。softmax之前不要用tanh，参数初始化的时候使用turncated normal而不是random normal。
+20190330:发现使用bert的问题，bert返回的东西有<cls>等token，会影生成网络。加入batch normal。准备换回glove。
+20190331-20190407:生病。
+
 
 接下来：
 查看各placeholder的准备输入是否正确。检测loss与answer pre是否正确。

@@ -10,7 +10,7 @@ from load_marco_simplify import load_marco
 from load_dict import load_dict
 from BiDAF import BiDAF
 from ptr_generator_reconstruct import PTR_Gnerator
-from BiLSTM_cudnn import BiLSTM
+from BiLSTM import BiLSTM
 import numpy as np
 
 

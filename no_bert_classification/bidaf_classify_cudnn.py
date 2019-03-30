@@ -5,7 +5,7 @@ import tensorflow as tf
 from load_marco_simplify import load_marco
 from BiDAF import BiDAF
 from classification_vector import classification
-from BiLSTM_cudnn import BiLSTM
+from BiLSTM import BiLSTM
 from extract_valid_para import extract_valid
 from load_dict import load_dict
 import numpy as np
