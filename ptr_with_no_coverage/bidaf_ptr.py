@@ -6,7 +6,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from hyperparameters import Hyperparameters as hp
 import tensorflow as tf
-from load_marco_simplify import load_marco
+from load_marco import load_marco
 from load_dict import load_dict
 from BiDAF import BiDAF
 from ptr_generator import PTR_Gnerator

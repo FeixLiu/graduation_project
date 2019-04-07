@@ -37,13 +37,15 @@ class classification():
             shape: [paragraph_numbers, 1]
         """
         fuse = tf.reshape(self._inputs, shape=[-1, self._embedding_size])
-        classify_weights1 = tf.Variable(tf.random_normal(shape=[self._embedding_size, self._bert_embedding_size]),
+        classify_weights1 = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                                            shape=[self._embedding_size, self._bert_embedding_size]),
                                         dtype=tf.float32,
                                         name=self._name+'_classify_weights1')
         classify_biases1 = tf.Variable(tf.constant(0.1, shape=[1, self._bert_embedding_size]),
                                        dtype=tf.float32,
                                        name=self._name+'_classify_biases1')
-        classify_weights2 = tf.Variable(tf.random_normal(shape=[self._bert_embedding_size, 1]),
+        classify_weights2 = tf.Variable(tf.truncated_normal(mean=0., stddev=0.01,
+                                                            shape=[self._bert_embedding_size, 1]),
                                         dtype=tf.float32,
                                         name=self._name+'_classify_weights2')
         classify_biases2 = tf.Variable(tf.constant(0.1, shape=[1, 1]),

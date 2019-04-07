@@ -2,7 +2,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from hyperparameters import Hyperparameters as hp
 import tensorflow as tf
-from load_marco_simplify import load_marco
+from load_marco import load_marco
 from BiDAF import BiDAF
 from classification_vector import classification
 from BiLSTM import BiLSTM

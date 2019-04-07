@@ -9,7 +9,7 @@ class Hyperparameters():
     pos_weight = 0.1
     ptr_conv_beta = 0.5
     attention_inter_size = 256
-    learning_rate = 0.0001
+    learning_rate = 0.001
     pos_para = 2
     epoch = 400
     vocab_size = 25699
