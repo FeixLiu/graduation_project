@@ -1,6 +1,7 @@
 import json
 import sys
 import numpy as np
+import nltk
 
 
 class load_marco():
@@ -44,35 +45,61 @@ class load_marco():
         """
         function: load the marco dataset
         """
-        self.passage = []
         self.label = []
-        self.answer = []
+        self.passage_index = []
+        self.query_index = []
         self.answer_index = []
-        self.question = []
+        self.answer_indice = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
-        for i in range(self.total):
+        for i in range(0, self.total, 40):
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
             passage = data['passages'][i]
             label_temp, para_temp = self._convert_para(passage)
-            self.passage.append(para_temp)
+            para_index_temp = []
+            for i in para_temp:
+                para_index = self._get_index(i)
+                para_index_temp.append(para_index)
+            para_index_temp = np.array(para_index_temp)
+            self.passage_index.append(para_index_temp)
+            self.query_index.append(self._get_index(query))
             self.label.append(label_temp)
-            answer = self._expand_answer(answer)
-            self.answer.append(answer)
-            self.question.append(query)
+            self.answer_index.append(self._get_index(answer, True))
             para_word = self._para_index(para_temp, label_temp)
             answer_index = self._convert2index(answer, para_word)
-            self.answer_index.append(np.array(answer_index))
+            self.answer_indice.append(np.array(answer_index))
+        self.total = len(self.answer_index)
         self.label = np.array(self.label)
+        self.answer_index = np.array(self.answer_index)
+        self.answer_indice = np.array(self.answer_indice)
+        self.query_index = np.array(self.query_index)
+        self.passage_index = np.array(self.passage_index)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set from:', self._path, file=sys.stderr)
 
-    def _expand_answer(self, answer):
-        answer = '<start> ' + answer
-        answer = answer + ' <end>'
-        return answer
+    def _get_index(self, inputs, answer=False):
+        """
+        function: convert the inputs to its index representation
+        :param inputs (string): input sentence
+        :return temp(list): the index representation of inputs
+        """
+        words = nltk.word_tokenize(inputs)
+        temp = []
+        if answer:
+            temp.append(0)
+        for word in words:
+            try:
+                index = self._vocab.vocab2index[word]
+            except KeyError:
+                index = 0
+            temp.append(index)
+            if len(temp) == self._max_seq_length:
+                break
+        while len(temp) < self._max_seq_length:
+            temp.append(0)
+        return temp
 
     def _convert_para(self, passage):
         """
@@ -104,9 +131,10 @@ class load_marco():
         :param para_word (dictionary): the word index dictionary of current passage
         :return answer_index (list): the word index of the input answer
         """
+        words = nltk.word_tokenize(answer)
         answer_index = []
         id = 0
-        for word in answer.split(' '):
+        for word in words:
             try:
                 index = self._vocab.vocab2index[word]
             except KeyError:

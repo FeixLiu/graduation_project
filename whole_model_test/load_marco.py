@@ -62,13 +62,19 @@ class load_marco():
             label_temp, para_temp = self._convert_para(passage)
             self.passage.append(para_temp)
             self.label.append(label_temp)
+            answer = self._expand_answer(answer)
             self.answer.append(answer)
             self.question.append(query)
             para_word = self._para_index(para_temp, label_temp)
-            answer_index, answer_len = self._convert2index(answer, para_word)
+            answer_index = self._convert2index(answer, para_word)
             self.answer_index.append(np.array(answer_index))
         self.label = np.array(self.label)
         print('Loaded MS Marco', self._path.split('/')[4].split('_')[0], 'set from:', self._path, file=sys.stderr)
+
+    def _expand_answer(self, answer):
+        answer = '<start> ' + answer
+        answer = answer + ' <end>'
+        return answer
 
     def _convert_para(self, passage):
         """
@@ -110,13 +116,14 @@ class load_marco():
                     index = para_word['word2index'][word]
                 except KeyError:
                     index = 0
-            answer_index.append([id, index])
+            answer_index.append([0, index])
             id += 1
-        temp = id
-        while temp < self._max_seq_length:
-            answer_index.append([temp, 0])
-            temp += 1
-        return answer_index, id
+            if id == 64:
+                break
+        while id < self._max_seq_length:
+            answer_index.append([0, 0])
+            id += 1
+        return answer_index
 
     def _para_index(self, para, label):
         """

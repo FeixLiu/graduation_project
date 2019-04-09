@@ -90,7 +90,7 @@ class PTR_Gnerator():
                                             shape=[self._decoder_embedding_size, 1]),
                          dtype=tf.float32,
                          name=self._name + '_ws_pgen')
-        bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]))
+        bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]), name=self._name + '_bptr_pgen')
         whh = tf.matmul(self._h_star, wh)
         wss = tf.matmul(self._decoder_state, ws)
         pgen = tf.add(tf.add(whh, wss), bptr)
@@ -129,7 +129,7 @@ class PTR_Gnerator():
 
     def _get_pre(self):
         pgenpv = tf.math.multiply(self._pgen, self._pvocab)
-        pgenat = tf.math.multiply(tf.subtract(1., - self._pgen), tf.transpose(self._attention))
+        pgenat = tf.math.multiply(tf.subtract(1., self._pgen), tf.transpose(self._attention))
         pgenpoverall = tf.concat([pgenpv, pgenat], axis=1)
         prediction = tf.argmax(pgenpoverall, axis=1)
         return prediction

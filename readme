@@ -33,6 +33,7 @@
 20190329:找到问题所在。softmax之前不要用tanh，参数初始化的时候使用turncated normal而不是random normal。
 20190330:发现使用bert的问题，bert返回的东西有<cls>等token，会影生成网络。加入batch normal。准备换回glove。
 20190331-20190407:生病。
+20190408:老子回来了！！接着肝，重新画模型图。重新跑模型。开始写循环的生成网络。测试用的代码有点问题，训练的ans加入<start>与<end>。
 
 
 接下来：

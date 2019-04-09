@@ -1,12 +1,7 @@
 import tensorflow as tf
 
 
-#每一个timestep都申请一个这个类，每个类的参数只负责当前的timestep
-#需要传入的参数，fuse vector，st，xt，coverage vector
-#可以返回的两个参数，loss以及prediction， 均针对当前timestep
-
-
-class PTR_Gnerator_TS():
+class PTR_Gnerator():
     def __init__(self, fuse_vector, decoder_state, vocab_size, attention_inter_size, fuse_vector_embedding_size,
                  context_seq_length, ans_seq_length, decoder_embedding_size, ans_ids, epsilon, name):
         self._fuse_vector = fuse_vector
@@ -95,7 +90,7 @@ class PTR_Gnerator_TS():
                                             shape=[self._decoder_embedding_size, 1]),
                          dtype=tf.float32,
                          name=self._name + '_ws_pgen')
-        bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]))
+        bptr = tf.Variable(tf.constant(0.1, shape=[1, 1]), name=self._name + '_bptr_pgen')
         whh = tf.matmul(self._h_star, wh)
         wss = tf.matmul(self._decoder_state, ws)
         pgen = tf.add(tf.add(whh, wss), bptr)
@@ -134,7 +129,7 @@ class PTR_Gnerator_TS():
 
     def _get_pre(self):
         pgenpv = tf.math.multiply(self._pgen, self._pvocab)
-        pgenat = tf.math.multiply(tf.subtract(1., - self._pgen), tf.transpose(self._attention))
+        pgenat = tf.math.multiply(tf.subtract(1., self._pgen), tf.transpose(self._attention))
         pgenpoverall = tf.concat([pgenpv, pgenat], axis=1)
         prediction = tf.argmax(pgenpoverall, axis=1)
         return prediction

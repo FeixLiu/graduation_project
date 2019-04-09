@@ -7,8 +7,8 @@ from hyperparameters import Hyperparameters as hp
 from BiDAF import BiDAF
 from BiLSTM import BiLSTM
 from bert import bert_server
+from ptr_generator import PTR_Gnerator_test
 
-'''
 vocab = load_dict(hp.word, hp.embedding_size)
 marco_train = load_marco(
     vocab=vocab,
@@ -16,16 +16,14 @@ marco_train = load_marco(
     max_seq_length=hp.max_seq_length,
     max_para=hp.max_para
 )
-'''
 
 with tf.device('/gpu:1'):
     with tf.variable_scope('placeholder'):
-        #bert = bert_server()
+        bert = bert_server()
 
         context_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.embedding_size])
         qas_input = tf.placeholder(dtype=tf.float32, shape=[None, hp.max_seq_length, hp.embedding_size])
         label_input = tf.placeholder(shape=[None, 1], dtype=tf.float32)
-        answer_input = tf.placeholder(dtype=tf.float32, shape=[hp.max_seq_length, hp.embedding_size])
         answer_index = tf.placeholder(dtype=tf.int32, shape=[hp.max_seq_length, 2])
         keep_prob = tf.placeholder(tf.float32)
 
@@ -78,3 +76,48 @@ with tf.device('/gpu:1'):
             embd_size=4 * hp.embedding_size,
             pos_para=hp.pos_para,
         ).valid_para
+
+    with tf.variable_scope('ptr_generator', reuse=tf.AUTO_REUSE):
+        ptrg = PTR_Gnerator_test(
+            fuse_vector=valid_para,
+            vocab_size=hp.vocab_size,
+            attention_inter_size=hp.attention_inter_size,
+            fuse_vector_embedding_size=4 * hp.embedding_size,
+            bert=bert,
+            context_seq_length=2 * hp.max_seq_length,
+            ans_seq_length=hp.max_seq_length,
+            decoder_embedding_size=hp.embedding_size,
+            ans_ids=answer_index,
+            epsilon=hp.epsilon,
+            vocab=vocab,
+            name='ptr_generator'
+        )
+
+    init = tf.global_variables_initializer()
+
+    config = tf.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.allow_growth = True
+
+    with tf.Session(config=config) as sess:
+        sess.run(init)
+        saver = tf.train.Saver()
+        saver.restore(sess, './bidaf_class_ptr/model')
+        for epoch in range(hp.epoch):
+            for i in range(10):
+                passage = marco_train.passage[i]
+                label = marco_train.label[i]
+                query = marco_train.question[i]
+                answer = marco_train.answer[i]
+                answer_indice = marco_train.answer_index[i]
+                labels = marco_train.label[i]
+                passage_embd = bert.convert2vector(passage)
+                query_embd = bert.convert2vector([query])
+                answer_embd = bert.convert2vector([answer])[0]
+                dict = {
+                    keep_prob: hp.keep_prob,
+                    context_input: passage_embd,
+                    qas_input: query_embd,
+                    label_input: labels,
+                    answer_index: answer_indice
+                }
+                print(sess.run(ptrg.prediction, feed_dict=dict))
