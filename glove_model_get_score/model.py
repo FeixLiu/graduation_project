@@ -10,6 +10,8 @@ from BiLSTM import BiLSTM
 from extract_valid_para import extract_valid
 from load_dict import load_dict
 from ptr_generator import PTR_Gnerator
+from classification_f1 import classification_f1
+from bleu import get_blue_1
 
 vocab = load_dict(hp.word, hp.embedding_size)
 marco_train = load_marco(
@@ -20,7 +22,7 @@ marco_train = load_marco(
     vocab_size=hp.vocab_size
 )
 
-with tf.device('/gpu:0'):
+with tf.device('/gpu:1'):
     with tf.variable_scope('embedding'):
         embedding_weight = tf.Variable(tf.constant(0.0, shape=[hp.vocab_size, hp.embedding_size]),
                                        trainable=False,
@@ -95,19 +97,6 @@ with tf.device('/gpu:0'):
             name='classification'
         ).class_vector
 
-    with tf.name_scope('class_loss'):
-        class_loss = tf.reduce_sum(
-            tf.reduce_sum(
-                tf.nn.weighted_cross_entropy_with_logits(
-                    targets=label_input,
-                    logits=classification_vector,
-                    pos_weight=hp.pos_weight),
-                axis=0),
-            axis=0
-        )
-        class_loss = tf.math.multiply(0.1, class_loss)
-        class_loss_summary = tf.summary.scalar("class_loss", class_loss)
-
     with tf.variable_scope('extract_valid', reuse=tf.AUTO_REUSE):
         valid_para = extract_valid(
             fuse_vector=fuse_vector,
@@ -132,48 +121,65 @@ with tf.device('/gpu:0'):
             name='ptr_generator'
         )
 
-    with tf.name_scope('pre_loss'):
-        pre_loss = ptrg.loss / hp.max_seq_length
-        pre_loss_summary = tf.summary.scalar("pre_loss", pre_loss)
-
-    with tf.name_scope('total_loss'):
-        total_loss = tf.add(class_loss, pre_loss)
-        total_loss_summary = tf.summary.scalar("total_loss", total_loss)
-
-    loss_merged = tf.summary.merge([class_loss_summary, pre_loss_summary, total_loss_summary])
-
-    train_op = tf.train.GradientDescentOptimizer(learning_rate=hp.learning_rate).minimize(total_loss)
-
-    init = tf.global_variables_initializer()
-
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
 
     with tf.Session(config=config) as sess:
-        sess.run(init)
         sess.run(embedding_init, feed_dict={embedding_placeholder: vocab.embd})
-        writer = tf.summary.FileWriter('bidaf_class_ptr/log', sess.graph)
         saver = tf.train.Saver()
-        counter = 0
-        for epoch in range(hp.epoch):
-            for i in range(marco_train.total):
-                passage_ids = marco_train.passage_index[i]
-                label = marco_train.label[i]
-                query_ids = marco_train.query_index[i][np.newaxis, :]
-                answer_ids = marco_train.answer_index[i][np.newaxis, :]
-                answer_indice = marco_train.answer_indice[i]
-                labels = marco_train.label[i]
-                dict = {
-                    keep_prob: hp.keep_prob,
-                    label_input: labels,
-                    ans_input_ids: answer_ids,
-                    context_input_ids: passage_ids,
-                    qas_input_ids: query_ids,
-                    answer_index: answer_indice
-                }
-                sess.run(train_op, feed_dict=dict)
-                #saver.restore(sess, 'bidaf_class_ptr/model/my_model-001')
-                if i % hp.loss_acc_iter == 0:
-                    writer.add_summary(sess.run(loss_merged, feed_dict=dict), counter)
-                    counter += 1
-            saver.save(sess, 'bidaf_class_ptr/model/my_model', global_step=epoch)
+        saver.restore(sess, './bidaf_class_ptr/model/my_model-18')
+        cf = classification_f1()
+        gb1 = get_blue_1()
+        for i in range(marco_train.total):
+            passage_ids = marco_train.passage_index[i]
+            label = marco_train.label[i]
+            query_ids = marco_train.query_index[i][np.newaxis, :]
+            answer_ids = marco_train.answer_index[i][np.newaxis, :]
+            answer_indice = marco_train.answer_indice[i]
+            labels = marco_train.label[i]
+            para_word = marco_train.para_word[i]
+            dict = {
+                keep_prob: hp.keep_prob,
+                label_input: labels,
+                ans_input_ids: answer_ids,
+                context_input_ids: passage_ids,
+                qas_input_ids: query_ids,
+                answer_index: answer_indice
+            }
+            #print(sess.run(classification_vector, feed_dict=dict))
+            #print(labels)
+            prediction = sess.run(ptrg.prediction, feed_dict=dict)
+            classify = sess.run(classification_vector, feed_dict=dict)
+            labels_target = np.reshape(labels, (10))
+            labels_target = labels_target.astype(np.int)
+            classify = np.reshape(classify, (10))
+            classify_temp = 1 / (1 + np.exp(-classify))
+            classify = []
+            for i in classify_temp:
+                if i > 0.5:
+                    classify.append(1)
+                else:
+                    classify.append(0)
+            classify = np.array(classify)
+            cf.update_acc_recall(labels_target, classify)
+            rst = []
+            for i in range(len(prediction)):
+                if np.sum(prediction[i:]) == 0:
+                    break
+                if prediction[i] <= hp.vocab_size:
+                    rst.append(vocab.index2vocab[prediction[i]])
+                else:
+                    rst.append(para_word['index2word'][prediction[i] - hp.vocab_size])
+            target_temp = []
+            target_id = answer_ids[0]
+            for i in range(1, len(target_id), 1):
+                if np.sum(target_id[i:]) == 0:
+                    break
+                if target_id[i] <= hp.vocab_size:
+                    target_temp.append(vocab.index2vocab[target_id[i]])
+                else:
+                    target_temp.append(para_word['index2word'][target_id[i] - hp.vocab_size])
+            target = [target_temp]
+            gb1.update_bleu(target, rst)
+        print(cf.total_para, cf.total_right_para, cf.total_pos,cf.pos_right)
+        print(gb1.score, gb1.totalsc)

@@ -51,20 +51,16 @@ class load_marco():
         self.query_index = []
         self.answer_index = []
         self.answer_indice = []
+        self.para_word = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
-        bad = 0
-        for i in range(0, self.total, 50):
+        for i in range(0, self.total, 80):
             i = str(i)
             query = data['query'][i]
             answer = data['answers'][i][0]
             passage = data['passages'][i]
             label_temp, para_temp = self._convert_para(passage)
-            if bad == 500 and np.sum(label_temp) == 0:
-                continue
-            if np.sum(label_temp) == 0:
-                bad += 1
             para_index_temp = []
             for i in para_temp:
                 para_index = self._get_index(i)
@@ -75,10 +71,9 @@ class load_marco():
             self.label.append(label_temp)
             self.answer_index.append(self._get_index(answer, True))
             para_word = self._para_index(para_temp, label_temp)
+            self.para_word.append(para_word)
             answer_index = self._convert2index(answer, para_word)
             self.answer_indice.append(np.array(answer_index))
-            if len(self.answer_index) == 10000:
-                break
         self.total = len(self.answer_index)
         self.label = np.array(self.label)
         self.answer_index = np.array(self.answer_index)
@@ -181,3 +176,5 @@ class load_marco():
             'index2word': index2word
         }
         return para_word
+
+

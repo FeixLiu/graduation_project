@@ -2,6 +2,8 @@ import json
 import sys
 import numpy as np
 import nltk
+from hyperparameters import Hyperparameters as hp
+from load_dict import load_dict
 
 
 class load_marco():
@@ -51,6 +53,7 @@ class load_marco():
         self.query_index = []
         self.answer_index = []
         self.answer_indice = []
+        self.para_word = []
         with open(self._path, 'r') as file:
             data = json.load(file)
         self.total = len(data['answers'])
@@ -61,7 +64,7 @@ class load_marco():
             answer = data['answers'][i][0]
             passage = data['passages'][i]
             label_temp, para_temp = self._convert_para(passage)
-            if bad == 500 and np.sum(label_temp) == 0:
+            if bad > 500 and np.sum(label_temp) == 0:
                 continue
             if np.sum(label_temp) == 0:
                 bad += 1
@@ -75,11 +78,13 @@ class load_marco():
             self.label.append(label_temp)
             self.answer_index.append(self._get_index(answer, True))
             para_word = self._para_index(para_temp, label_temp)
+            self.para_word.append(para_word)
             answer_index = self._convert2index(answer, para_word)
             self.answer_indice.append(np.array(answer_index))
-            if len(self.answer_index) == 10000:
+            if len(self.answer_index) > 10000:
                 break
         self.total = len(self.answer_index)
+        print(bad, self.total)
         self.label = np.array(self.label)
         self.answer_index = np.array(self.answer_index)
         self.answer_indice = np.array(self.answer_indice)
@@ -181,3 +186,12 @@ class load_marco():
             'index2word': index2word
         }
         return para_word
+
+vocab = load_dict(hp.word, hp.embedding_size)
+marco = load_marco(
+    path=hp.marco_train_path,
+    vocab=vocab,
+    max_seq_length=hp.max_seq_length,
+    max_para=hp.max_para,
+    vocab_size=hp.vocab_size
+)
